@@ -1,0 +1,551 @@
+/* ═══════════════════════════════════════════════════════════════════
+ * dsh-deepseek-peak-valley · 小组件样式
+ * 由设计稿 deepseek-pricing-widget-styles.html 落地，全部规则作用域化
+ * 在 .ds-pv 根类下，避免泄漏进宿主应用。
+ * 语义统一：高峰 = 暖色（--peak），空闲 = 冷色（--idle）；
+ * 根元素带 data-period="peak|idle"，驱动 --now 与各风格强调。
+ * ═══════════════════════════════════════════════════════════════════ */
+
+.ds-pv {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  font-size: 11px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif;
+}
+
+.ds-pv *, .ds-pv *::before, .ds-pv *::after { box-sizing: border-box; }
+.ds-pv button { font: inherit; cursor: pointer; color: inherit; }
+.ds-pv button:focus-visible, .ds-pv a:focus-visible { outline: 2px solid var(--accent, currentColor); outline-offset: 2px; }
+.ds-pv svg { display: block; }
+.ds-pv table { border-collapse: collapse; }
+
+/* ─── 共享组件原语（对齐 001-前端-页面交互 §2） ─────────────────── */
+
+.ds-pv .w { width: 100%; min-width: 0; font-size: 11px; }
+
+.ds-pv .w-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.ds-pv .w-badge { display: inline-flex; align-items: center; gap: 5px; }
+.ds-pv .w-badge .dot { width: 6px; height: 6px; border-radius: 50%; flex: none; }
+
+.ds-pv .tl-bar { position: relative; border-radius: 3px; height: 6px; }
+.ds-pv .tl-track { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; display: flex; }
+.ds-pv .tl-track > i { display: block; }
+.ds-pv .tl-cur {
+  /* left 由 inline style 按实时时钟接管（cursorPercentAt）；此处不写死。 */
+  position: absolute; top: -3px; width: 2px; height: 12px;
+  background: var(--now); transition: left .3s ease; z-index: 1;
+}
+.ds-pv .tl-meta { margin-top: 6px; font-size: 9.5px; font-family: ui-monospace, 'JetBrains Mono', 'IBM Plex Mono', 'SF Mono', Menlo, monospace; letter-spacing: 0.02em; }
+.ds-pv .w-tl { margin-top: 10px; }
+
+.ds-pv .wt { width: 100%; border-collapse: collapse; table-layout: fixed; margin-top: 9px; }
+.ds-pv .wt th, .ds-pv .wt td { font-size: 11px; line-height: 1.4; padding: 4px 2px; text-align: left; }
+.ds-pv .wt td:nth-child(2), .ds-pv .wt td:nth-child(3), .ds-pv .wt th:nth-child(2), .ds-pv .wt th:nth-child(3) { width: 46px; text-align: right; }
+.ds-pv .wt .n { font-family: ui-monospace, 'JetBrains Mono', 'IBM Plex Mono', 'SF Mono', Menlo, monospace; font-variant-numeric: tabular-nums; }
+.ds-pv .wt .hx { display: block; height: 2px; margin-top: 2px; border-radius: 1px; opacity: 0; transition: opacity .2s ease; }
+.ds-pv[data-period='peak'] .wt .hx.hp, .ds-pv[data-period='idle'] .wt .hx.hi { opacity: 1; background: var(--now); }
+
+.ds-pv .w-foot { margin-top: 8px; padding-top: 6px; font-size: 9.5px; font-family: ui-monospace, 'JetBrains Mono', 'IBM Plex Mono', 'SF Mono', Menlo, monospace; color: inherit; letter-spacing: 0.02em; }
+
+.ds-pv .w-toggle {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  width: 100%; margin-top: 9px; padding: 5px 2px;
+  border: 0; border-top: 1px solid; background: transparent; text-align: left;
+  font-size: 10px; font-weight: 600; letter-spacing: 0.02em;
+}
+.ds-pv .w-toggle .t-chev { width: 12px; height: 12px; flex: none; transition: transform .2s ease; }
+.ds-pv .w:not(.is-collapsed) .w-toggle .t-chev { transform: rotate(90deg); }
+.ds-pv .w.is-collapsed .wt, .ds-pv .w.is-collapsed .ttbl,
+.ds-pv .w.is-collapsed .w-foot, .ds-pv .w.is-collapsed .term-foot { display: none; }
+
+/* ─── 关键帧：脉冲 / 呼吸 ──────────────────────────────────────── */
+@keyframes dsh-pv-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
+
+/* ═══════ Style 01 · 脉冲 Pulse · 深色科技 ═══════ */
+.ds-style-01, .ds-collapsed-01 {
+  --peak: oklch(80% 0.15 75);
+  --idle: oklch(78% 0.11 195);
+  --now: var(--peak);
+}
+.ds-pv[data-period='idle'] .ds-style-01, .ds-pv[data-period='idle'] .ds-collapsed-01 { --now: var(--idle); }
+
+.ds-style-01 {
+  background: oklch(27% 0.02 262); border: 1px solid oklch(44% 0.03 258); border-radius: 12px;
+  padding: 12px; color: oklch(94% 0.01 250);
+  box-shadow: 0 10px 26px oklch(10% 0.03 260 / 0.45), inset 0 1px 0 oklch(100% 0 0 / 0.06);
+}
+.ds-style-01 .w-name { font-size: 12px; font-weight: 600; letter-spacing: 0.01em; }
+.ds-style-01 .w-badge {
+  padding: 3px 8px; border-radius: 999px;
+  background: color-mix(in oklch, var(--now) 16%, transparent);
+  border: 1px solid color-mix(in oklch, var(--now) 32%, transparent);
+  color: var(--now); font-size: 10.5px; font-weight: 600;
+}
+.ds-style-01 .w-badge .dot { background: var(--now); box-shadow: 0 0 6px var(--now); animation: dsh-pv-pulse 2.4s ease-in-out infinite; }
+.ds-style-01 .tl-track { background: oklch(20% 0.015 262); border: 1px solid oklch(36% 0.02 258); }
+.ds-style-01 .tl-track .s-idle { background: color-mix(in oklch, var(--idle) 34%, transparent); }
+.ds-style-01 .tl-track .s-peak { background: var(--peak); }
+.ds-style-01 .tl-cur { background: var(--now); box-shadow: 0 0 6px var(--now); top: -2px; height: 10px; }
+.ds-style-01 .tl-meta { color: oklch(64% 0.02 252); }
+.ds-style-01 .wt th { color: oklch(66% 0.02 252); font-size: 9.5px; letter-spacing: 0.06em; }
+.ds-style-01 .wt td { color: oklch(88% 0.01 250); }
+.ds-style-01 .wt td:not(.n) { color: oklch(75% 0.02 250); }
+.ds-style-01 .wt tr + tr td, .ds-style-01 .wt thead th { border-top: 1px solid oklch(38% 0.02 258); }
+.ds-style-01 .wt .wtm td { color: oklch(92% 0.01 250); font-weight: 600; }
+.ds-style-01 .n.ci { color: var(--idle); }
+.ds-style-01 .n.cp { color: var(--peak); }
+.ds-pv[data-period='peak'] .ds-style-01 .wt td:nth-child(3),
+.ds-pv[data-period='peak'] .ds-style-01 .wt th:nth-child(3),
+.ds-pv[data-period='idle'] .ds-style-01 .wt td:nth-child(2),
+.ds-pv[data-period='idle'] .ds-style-01 .wt th:nth-child(2) { background: color-mix(in oklch, var(--now) 9%, transparent); }
+.ds-style-01 .w-foot { color: oklch(60% 0.02 252); }
+.ds-style-01 .w-toggle { color: oklch(66% 0.02 252); border-top-color: oklch(38% 0.02 258); }
+.ds-style-01 .w-toggle:hover { color: oklch(92% 0.01 250); }
+
+.ds-collapsed-01 {
+  width: 42px; height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+  background: oklch(27% 0.02 262); border: 1px solid oklch(44% 0.03 258); border-radius: 12px; color: var(--now);
+}
+.ds-collapsed-01 .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--now); box-shadow: 0 0 8px var(--now); animation: dsh-pv-pulse 2.4s ease-in-out infinite; }
+.ds-collapsed-01 .lbl { font-size: 10px; font-weight: 600; }
+
+/* ═══════ Style 02 · 留白 Minimal · 极简浅色 ═══════ */
+.ds-style-02, .ds-collapsed-02 {
+  --peak: oklch(48% 0.15 40);
+  --idle: oklch(47% 0.1 160);
+  --now: var(--peak);
+}
+.ds-pv[data-period='idle'] .ds-style-02, .ds-pv[data-period='idle'] .ds-collapsed-02 { --now: var(--idle); }
+
+.ds-style-02 {
+  background: oklch(100% 0 0); border: 1px solid oklch(90% 0.006 240); border-radius: 10px;
+  padding: 14px; color: oklch(24% 0.02 240); box-shadow: 0 1px 2px oklch(20% 0.02 240 / 0.04);
+}
+.ds-style-02 .w-name { font-size: 12.5px; font-weight: 600; }
+.ds-style-02 .w-badge { color: var(--now); font-size: 11px; font-weight: 600; }
+.ds-style-02 .w-badge .dot { background: var(--now); }
+.ds-style-02 .tl-track { background: oklch(95% 0.005 240); }
+.ds-style-02 .tl-track .s-idle { background: oklch(86% 0.09 155); }
+.ds-style-02 .tl-track .s-peak { background: oklch(70% 0.13 42); }
+.ds-style-02 .tl-cur { background: var(--now); width: 2px; height: 10px; top: -2px; }
+.ds-style-02 .tl-meta { color: oklch(56% 0.015 240); }
+.ds-style-02 .wt th { color: oklch(62% 0.015 240); font-size: 9.5px; letter-spacing: 0.05em; }
+.ds-style-02 .wt td { color: oklch(32% 0.02 240); }
+.ds-style-02 .wt tr + tr td, .ds-style-02 .wt thead th { border-top: 1px solid oklch(94% 0.005 240); }
+.ds-style-02 .wt .wtm td { color: oklch(24% 0.02 240); font-weight: 600; }
+.ds-style-02 .n.ci { color: var(--idle); }
+.ds-style-02 .n.cp { color: var(--peak); }
+.ds-pv[data-period='peak'] .ds-style-02 .wt td:nth-child(3),
+.ds-pv[data-period='peak'] .ds-style-02 .wt th:nth-child(3),
+.ds-pv[data-period='idle'] .ds-style-02 .wt td:nth-child(2),
+.ds-pv[data-period='idle'] .ds-style-02 .wt th:nth-child(2) { background: color-mix(in oklch, var(--now) 5%, transparent); }
+.ds-style-02 .w-foot { color: oklch(56% 0.015 240); border-top: 1px solid oklch(94% 0.005 240); }
+.ds-style-02 .w-toggle { color: oklch(56% 0.015 240); border-top-color: oklch(94% 0.005 240); }
+.ds-style-02 .w-toggle:hover { color: oklch(24% 0.02 240); }
+
+.ds-collapsed-02 {
+  width: 42px; height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+  background: oklch(100% 0 0); border: 1px solid oklch(90% 0.006 240); border-radius: 10px; color: var(--now);
+  box-shadow: 0 1px 2px oklch(20% 0.02 240 / 0.04);
+}
+.ds-collapsed-02 .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--now); box-shadow: 0 0 6px color-mix(in oklch, var(--now) 40%, transparent); animation: dsh-pv-pulse 2.4s ease-in-out infinite; }
+.ds-collapsed-02 .lbl { font-size: 10px; font-weight: 600; }
+
+/* ═══════ Style 03 · 票据 Receipt · 票根 ═══════ */
+.ds-style-03, .ds-collapsed-03 {
+  --peak: oklch(48% 0.2 26);
+  --idle: oklch(46% 0.13 235);
+  --now: var(--peak);
+}
+.ds-pv[data-period='idle'] .ds-style-03, .ds-pv[data-period='idle'] .ds-collapsed-03 { --now: var(--idle); }
+
+.ds-style-03 {
+  position: relative; background: oklch(98.5% 0.008 90); border: 1px solid oklch(86% 0.02 80);
+  border-radius: 4px; padding: 12px 14px; color: oklch(34% 0.02 70);
+  box-shadow: 0 1px 0 oklch(86% 0.02 80);
+  font-family: ui-monospace, 'JetBrains Mono', 'IBM Plex Mono', 'SF Mono', Menlo, monospace;
+}
+.ds-style-03 .w-head { text-align: center; padding-bottom: 2px; }
+.ds-style-03 .w-name { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; }
+.ds-style-03 .w-sub { font-size: 9px; letter-spacing: 0.14em; color: oklch(55% 0.03 80); margin-top: 2px; }
+.ds-style-03 .stamp {
+  position: absolute; top: 10px; right: 12px; transform: rotate(-4deg);
+  border: 1.5px solid var(--now); color: var(--now); padding: 1px 7px;
+  font-size: 12px; font-weight: 700; letter-spacing: 0.12em; border-radius: 3px; opacity: 0.88;
+}
+.ds-style-03 .w-tear { position: relative; height: 0; margin: 10px 0 8px; border-top: 2px dashed oklch(80% 0.03 80); }
+.ds-style-03 .w-tear::before, .ds-style-03 .w-tear::after {
+  content: ""; position: absolute; top: -7px; width: 14px; height: 14px; border-radius: 50%;
+  background: oklch(94% 0.012 85);
+}
+.ds-style-03 .w-tear::before { left: -21px; }
+.ds-style-03 .w-tear::after { right: -21px; }
+.ds-style-03 .w-tl { margin-top: 0; }
+.ds-style-03 .tl-bar { height: 8px; }
+.ds-style-03 .tl-track { background: oklch(94% 0.012 85); border: 1px dashed oklch(80% 0.03 80); }
+.ds-style-03 .tl-track .s-idle { background: color-mix(in oklch, var(--idle) 30%, transparent); }
+.ds-style-03 .tl-track .s-peak { background: color-mix(in oklch, var(--peak) 78%, transparent); }
+.ds-style-03 .tl-cur { background: var(--now); width: 1.5px; height: 12px; top: -2px; }
+.ds-style-03 .tl-meta { color: oklch(55% 0.03 80); }
+.ds-style-03 .wt th { color: oklch(58% 0.03 80); font-size: 9px; letter-spacing: 0.08em; }
+.ds-style-03 .wt td { color: oklch(36% 0.02 70); font-size: 10.5px; }
+.ds-style-03 .wt tr:not(.wtm) td { border-bottom: 1px dotted oklch(80% 0.03 80); }
+.ds-style-03 .wt thead th { border-bottom: 1px solid oklch(70% 0.03 80); }
+.ds-style-03 .wt .wtm td { font-size: 9.5px; letter-spacing: 0.14em; color: oklch(30% 0.02 70); font-weight: 700; }
+.ds-style-03 .n.ci { color: var(--idle); }
+.ds-style-03 .n.cp { color: var(--peak); }
+.ds-pv[data-period='peak'] .ds-style-03 .wt td:nth-child(3),
+.ds-pv[data-period='peak'] .ds-style-03 .wt th:nth-child(3),
+.ds-pv[data-period='idle'] .ds-style-03 .wt td:nth-child(2),
+.ds-pv[data-period='idle'] .ds-style-03 .wt th:nth-child(2) { background: color-mix(in oklch, var(--now) 7%, transparent); }
+.ds-style-03 .w-foot { color: oklch(52% 0.03 80); }
+.ds-style-03 .w-toggle { font-family: ui-monospace, 'JetBrains Mono', 'IBM Plex Mono', 'SF Mono', Menlo, monospace; letter-spacing: 0.06em; color: oklch(52% 0.03 80); border-top: 1px dotted oklch(80% 0.03 80); }
+.ds-style-03 .w-toggle:hover { color: oklch(30% 0.02 70); }
+.ds-style-03 .bcode { height: 13px; margin-top: 6px; background: repeating-linear-gradient(90deg, oklch(32% 0.02 70) 0 1.5px, transparent 1.5px 3px, oklch(32% 0.02 70) 3px 5px, transparent 5px 6px); opacity: 0.85; }
+
+.ds-collapsed-03 {
+  width: 42px; height: 54px; position: relative; background: oklch(98.5% 0.008 90);
+  border: 1px solid oklch(86% 0.02 80); border-radius: 4px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: var(--now);
+}
+.ds-collapsed-03 .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--now); }
+.ds-collapsed-03 .lbl { font-family: ui-monospace, 'JetBrains Mono', 'IBM Plex Mono', 'SF Mono', Menlo, monospace; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; }
+.ds-collapsed-03::before, .ds-collapsed-03::after {
+  content: ""; position: absolute; left: 50%; transform: translateX(-50%); width: 16px; height: 8px;
+  border-radius: 0 0 50% 50%; background: oklch(94% 0.012 85); border: 1px solid oklch(86% 0.02 80); border-top: 0;
+}
+.ds-collapsed-03::before { top: -1px; }
+.ds-collapsed-03::after { bottom: -1px; transform: translateX(-50%) rotate(180deg); }
+
+/* ═══════ Style 04 · 时刻线 Metro · 线路图 ═══════ */
+.ds-style-04, .ds-collapsed-04 {
+  --peak: oklch(50% 0.17 45);
+  --idle: oklch(50% 0.11 225);
+  --now: var(--peak);
+}
+.ds-pv[data-period='idle'] .ds-style-04, .ds-pv[data-period='idle'] .ds-collapsed-04 { --now: var(--idle); }
+
+.ds-style-04 {
+  background: oklch(100% 0 0); border: 1px solid oklch(90% 0.006 240); border-radius: 12px;
+  padding: 14px; color: oklch(24% 0.02 240);
+}
+.ds-style-04 .w-name { font-size: 12.5px; font-weight: 600; }
+.ds-style-04 .w-badge { color: var(--now); font-size: 11px; font-weight: 600; }
+.ds-style-04 .w-badge .dot { background: var(--now); }
+.ds-style-04 .line { position: relative; height: 12px; margin: 14px 2px 0; }
+.ds-style-04 .line::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 4px; height: 4px; border-radius: 2px;
+  background: linear-gradient(90deg, var(--idle) 0 37.5%, var(--peak) 37.5% 50%, var(--idle) 50% 58.34%, var(--peak) 58.34% 75%, var(--idle) 75% 100%);
+}
+.ds-style-04 .sta {
+  position: absolute; top: 1.5px; width: 9px; height: 9px; margin-left: -4.5px; border-radius: 50%;
+  background: oklch(100% 0 0); border: 2.5px solid oklch(60% 0.03 240);
+}
+.ds-style-04 .train {
+  /* left 由 inline style 按实时时钟接管（cursorPercentAt）；此处不写死。 */
+  position: absolute; top: 0; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%;
+  background: oklch(100% 0 0); border: 3px solid var(--now);
+  transition: left .3s ease; box-shadow: 0 0 0 2px color-mix(in oklch, var(--now) 30%, transparent);
+}
+.ds-style-04 .line-times { display: flex; justify-content: space-between; font-family: ui-monospace, 'JetBrains Mono', 'IBM Plex Mono', 'SF Mono', Menlo, monospace; font-size: 8.5px; color: oklch(56% 0.015 240); margin-top: 6px; }
+.ds-style-04 .legend { display: flex; gap: 10px; font-size: 9.5px; color: oklch(56% 0.015 240); margin-top: 4px; }
+.ds-style-04 .legend i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+.ds-style-04 .legend .lg-pk { background: var(--peak); }
+.ds-style-04 .legend .lg-id { background: var(--idle); }
+.ds-style-04 .wt th { color: oklch(62% 0.015 240); font-size: 9.5px; letter-spacing: 0.05em; }
+.ds-style-04 .wt td { color: oklch(32% 0.02 240); }
+.ds-style-04 .wt tr + tr td, .ds-style-04 .wt thead th { border-top: 1px solid oklch(94% 0.005 240); }
+.ds-style-04 .wt .wtm td { color: oklch(24% 0.02 240); font-weight: 600; }
+.ds-style-04 .n.ci { color: var(--idle); }
+.ds-style-04 .n.cp { color: var(--peak); }
+.ds-pv[data-period='peak'] .ds-style-04 .n.cp, .ds-pv[data-period='idle'] .ds-style-04 .n.ci { font-weight: 700; }
+.ds-style-04 .w-foot { color: oklch(56% 0.015 240); border-top: 1px solid oklch(94% 0.005 240); }
+.ds-style-04 .w-toggle { color: oklch(56% 0.015 240); border-top-color: oklch(94% 0.005 240); }
+.ds-style-04 .w-toggle:hover { color: oklch(24% 0.02 240); }
+
+.ds-collapsed-04 { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.ds-collapsed-04 .mini {
+  width: 16px; height: 44px; border-radius: 3px; position: relative;
+  background: linear-gradient(180deg, var(--idle) 0 37.5%, var(--peak) 37.5% 50%, var(--idle) 50% 58.34%, var(--peak) 58.34% 75%, var(--idle) 75% 100%);
+}
+.ds-collapsed-04 .train {
+  /* top 由 inline style 按实时时钟接管（cursorPercentAt）；此处不写死。 */
+  position: absolute; left: 50%; margin-left: -4px; width: 8px; height: 8px; border-radius: 50%;
+  background: oklch(100% 0 0); border: 2px solid var(--now); box-shadow: 0 0 0 1.5px color-mix(in oklch, var(--now) 35%, transparent);
+  transition: top .3s ease;
+}
+.ds-collapsed-04 .lbl { font-family: ui-monospace, 'JetBrains Mono', 'IBM Plex Mono', 'SF Mono', Menlo, monospace; font-size: 9px; color: var(--now); font-weight: 600; }
+
+/* ═══════ Style 05 · 胶囊 Pills · 圆润亲和 ═══════ */
+.ds-style-05, .ds-collapsed-05 {
+  --peak: oklch(48% 0.15 45);
+  --idle: oklch(48% 0.1 220);
+  --now: var(--peak);
+  --pk-fg: oklch(40% 0.15 45);
+  --id-fg: oklch(40% 0.1 220);
+  --pk-bg: oklch(92% 0.06 60);
+  --id-bg: oklch(92% 0.05 215);
+}
+.ds-pv[data-period='idle'] .ds-style-05, .ds-pv[data-period='idle'] .ds-collapsed-05 { --now: var(--idle); }
+
+.ds-style-05 {
+  background: oklch(100% 0 0); border: 1px solid oklch(92% 0.008 90); border-radius: 18px;
+  padding: 14px; color: oklch(28% 0.02 90);
+}
+.ds-style-05 .w-name { font-size: 12.5px; font-weight: 600; }
+.ds-style-05 .w-badge {
+  padding: 4px 11px; border-radius: 999px; background: color-mix(in oklch, var(--now) 13%, oklch(100% 0 0));
+  color: var(--now); font-size: 11px; font-weight: 600;
+}
+.ds-style-05 .w-badge .dot { background: var(--now); }
+.ds-style-05 .tl-bar { height: 8px; }
+.ds-style-05 .tl-track { gap: 3px; }
+.ds-style-05 .tl-track > i { border-radius: 6px; }
+.ds-style-05 .tl-track .s-idle { background: var(--id-bg); }
+.ds-style-05 .tl-track .s-peak { background: var(--pk-bg); }
+.ds-style-05 .tl-cur { background: var(--now); width: 3px; height: 12px; top: -2px; border-radius: 2px; }
+.ds-style-05 .tl-meta { color: oklch(56% 0.02 90); }
+.ds-style-05 .wt th { color: oklch(62% 0.02 90); font-size: 9.5px; }
+.ds-style-05 .wt td { color: oklch(34% 0.02 90); }
+.ds-style-05 .wt tr + tr td, .ds-style-05 .wt thead th { border-top: 1px solid oklch(94% 0.01 90); }
+.ds-style-05 .wt .n { border-radius: 7px; padding: 1px 5px; }
+.ds-style-05 .wt .n.ci { color: var(--id-fg); background: var(--id-bg); }
+.ds-style-05 .wt .n.cp { color: var(--pk-fg); background: var(--pk-bg); }
+.ds-style-05 .wt .wtm td { font-weight: 700; }
+.ds-pv[data-period='peak'] .ds-style-05 .wt td:nth-child(3),
+.ds-pv[data-period='idle'] .ds-style-05 .wt td:nth-child(2) { box-shadow: inset 0 -2px 0 var(--now); border-radius: 4px; }
+.ds-style-05 .w-foot { color: oklch(55% 0.02 90); }
+.ds-style-05 .w-toggle { color: oklch(55% 0.02 90); border-top-color: oklch(94% 0.01 90); }
+.ds-style-05 .w-toggle:hover { color: oklch(28% 0.02 90); }
+
+.ds-collapsed-05 {
+  display: flex; align-items: center; gap: 6px; padding: 9px 12px; border-radius: 999px;
+  background: color-mix(in oklch, var(--now) 13%, oklch(100% 0 0)); color: var(--now);
+  border: 1px solid color-mix(in oklch, var(--now) 26%, transparent); font-size: 11px; font-weight: 600;
+}
+.ds-collapsed-05 .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--now); }
+
+/* ═══════ Style 06 · 终端 Terminal · CLI 日志 ═══════ */
+.ds-style-06, .ds-collapsed-06 {
+  --peak: oklch(80% 0.15 85);
+  --idle: oklch(72% 0.14 150);
+  --now: var(--peak);
+}
+.ds-pv[data-period='idle'] .ds-style-06, .ds-pv[data-period='idle'] .ds-collapsed-06 { --now: var(--idle); }
+
+.ds-style-06 {
+  background: oklch(19% 0.012 260); border: 1px solid oklch(38% 0.02 260); border-radius: 8px;
+  overflow: hidden; color: oklch(86% 0.02 150);
+  font-family: ui-monospace, 'JetBrains Mono', 'IBM Plex Mono', 'SF Mono', Menlo, monospace;
+}
+.ds-style-06 .term-bar { display: flex; align-items: center; gap: 6px; padding: 7px 10px; background: oklch(16% 0.012 260); border-bottom: 1px solid oklch(34% 0.02 260); }
+.ds-style-06 .term-bar .tdot { width: 8px; height: 8px; border-radius: 50%; background: oklch(55% 0.02 260); }
+.ds-style-06 .term-bar .tname { font-size: 10px; color: oklch(68% 0.02 240); margin-left: 4px; letter-spacing: 0.04em; }
+.ds-style-06 .term-body { padding: 10px 12px 8px; }
+.ds-style-06 .tline { display: flex; gap: 6px; font-size: 10.5px; line-height: 1.7; white-space: normal; }
+.ds-style-06 .tline .ps { color: oklch(60% 0.02 240); }
+.ds-style-06 .tline .txt { color: oklch(84% 0.02 150); }
+.ds-style-06 .tline .nowv { color: var(--now); font-weight: 700; }
+.ds-style-06 .tline .dim { color: oklch(56% 0.02 240); }
+.ds-style-06 .ttbl { margin-top: 8px; font-size: 10.5px; line-height: 1.75; }
+.ds-style-06 .tt-row, .ds-style-06 .tt-head { display: flex; justify-content: space-between; gap: 8px; }
+.ds-style-06 .tt-row { min-width: 0; }
+.ds-style-06 .tt-head { color: oklch(56% 0.02 240); font-size: 9.5px; border-bottom: 1px dashed oklch(36% 0.02 260); margin-bottom: 2px; padding-bottom: 2px; }
+.ds-style-06 .tt-row .m { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: oklch(80% 0.02 160); }
+.ds-style-06 .tt-row .p { display: flex; gap: 8px; flex: none; }
+.ds-style-06 .tt-row .n { width: 38px; text-align: right; }
+.ds-style-06 .tt-row .n.idle { color: var(--idle); }
+.ds-style-06 .tt-row .n.peak { color: var(--peak); }
+.ds-pv[data-period='peak'] .ds-style-06 .tt-row .n.peak, .ds-pv[data-period='idle'] .ds-style-06 .tt-row .n.idle { font-weight: 700; }
+.ds-style-06 .term-foot { border-top: 1px solid oklch(34% 0.02 260); padding: 7px 12px; font-size: 9.5px; color: oklch(54% 0.02 240); }
+.ds-style-06 .w-toggle { font-family: ui-monospace, 'JetBrains Mono', 'IBM Plex Mono', 'SF Mono', Menlo, monospace; color: oklch(58% 0.02 240); border-top-color: oklch(34% 0.02 260); }
+.ds-style-06 .w-toggle:hover { color: oklch(88% 0.02 150); }
+
+.ds-collapsed-06 {
+  width: 42px; height: 54px; background: oklch(19% 0.012 260); border: 1px solid oklch(38% 0.02 260);
+  border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  font-family: ui-monospace, 'JetBrains Mono', 'IBM Plex Mono', 'SF Mono', Menlo, monospace; color: var(--now);
+}
+.ds-collapsed-06 .caret { font-size: 14px; font-weight: 700; }
+.ds-collapsed-06 .lbl { font-size: 9.5px; }
+
+/* ═══════ Style 07 · 粗野 Brutalist · 硬边高对比 ═══════ */
+.ds-style-07, .ds-collapsed-07 {
+  --peak: oklch(50% 0.2 25);
+  --idle: oklch(44% 0.12 230);
+  --now: var(--peak);
+}
+.ds-pv[data-period='idle'] .ds-style-07, .ds-pv[data-period='idle'] .ds-collapsed-07 { --now: var(--idle); }
+
+.ds-style-07 {
+  background: oklch(100% 0 0); border: 2px solid oklch(20% 0 0); border-radius: 0; padding: 12px;
+  box-shadow: 5px 5px 0 0 oklch(20% 0 0); color: oklch(22% 0 0);
+}
+.ds-style-07 .w-name { font-family: ui-monospace, 'JetBrains Mono', 'IBM Plex Mono', 'SF Mono', Menlo, monospace; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.ds-style-07 .w-badge { padding: 3px 9px; background: var(--now); color: oklch(100% 0 0); font-family: ui-monospace, 'JetBrains Mono', 'IBM Plex Mono', 'SF Mono', Menlo, monospace; font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; }
+.ds-style-07 .tl-track { gap: 2px; background: oklch(20% 0 0); border-radius: 0; }
+.ds-style-07 .tl-track .s-idle { background: oklch(78% 0.02 200); }
+.ds-style-07 .tl-track .s-peak { background: var(--peak); }
+.ds-style-07 .tl-cur { width: 4px; height: 16px; top: -3px; background: var(--now); }
+.ds-style-07 .tl-meta { font-family: ui-monospace, 'JetBrains Mono', 'IBM Plex Mono', 'SF Mono', Menlo, monospace; font-size: 9px; color: oklch(45% 0 0); }
+.ds-style-07 .wt th { font-family: ui-monospace, 'JetBrains Mono', 'IBM Plex Mono', 'SF Mono', Menlo, monospace; font-size: 9px; letter-spacing: 0.06em; color: oklch(45% 0 0); }
+.ds-style-07 .wt td { font-size: 11px; color: oklch(25% 0 0); }
+.ds-style-07 .wt thead th { border-top: 2px solid oklch(20% 0 0); border-bottom: 2px solid oklch(20% 0 0); }
+.ds-style-07 .wt tr + tr td { border-top: 1.5px solid oklch(20% 0 0); }
+.ds-style-07 .wt .wtm td { font-family: ui-monospace, 'JetBrains Mono', 'IBM Plex Mono', 'SF Mono', Menlo, monospace; font-size: 9.5px; font-weight: 700; letter-spacing: 0.1em; }
+.ds-style-07 .n.ci { color: var(--idle); font-weight: 700; }
+.ds-style-07 .n.cp { color: var(--peak); font-weight: 700; }
+.ds-pv[data-period='peak'] .ds-style-07 .n.cp, .ds-pv[data-period='idle'] .ds-style-07 .n.ci { background: oklch(20% 0 0); color: oklch(100% 0 0); }
+.ds-style-07 .w-foot { font-family: ui-monospace, 'JetBrains Mono', 'IBM Plex Mono', 'SF Mono', Menlo, monospace; font-size: 9px; color: oklch(45% 0 0); border-top: 1.5px solid oklch(20% 0 0); padding-top: 6px; }
+.ds-style-07 .w-toggle { font-family: ui-monospace, 'JetBrains Mono', 'IBM Plex Mono', 'SF Mono', Menlo, monospace; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: oklch(45% 0 0); border-top: 1.5px solid oklch(20% 0 0); }
+.ds-style-07 .w-toggle:hover { color: oklch(20% 0 0); }
+
+.ds-collapsed-07 {
+  width: 44px; height: 52px; background: oklch(100% 0 0); border: 2px solid oklch(20% 0 0); border-radius: 0;
+  box-shadow: 4px 4px 0 0 oklch(20% 0 0); display: grid; place-items: center;
+}
+.ds-collapsed-07 .box { width: 20px; height: 20px; background: var(--now); color: oklch(100% 0 0); font-family: ui-monospace, 'JetBrains Mono', 'IBM Plex Mono', 'SF Mono', Menlo, monospace; font-size: 10px; font-weight: 700; display: grid; place-items: center; }
+
+/* ═══════ Style 08 · 玻璃 Glass · 毛玻璃 ═══════ */
+.ds-style-08, .ds-collapsed-08 {
+  --peak: oklch(72% 0.15 70);
+  --idle: oklch(74% 0.1 200);
+  --now: var(--peak);
+}
+.ds-pv[data-period='idle'] .ds-style-08, .ds-pv[data-period='idle'] .ds-collapsed-08 { --now: var(--idle); }
+
+.ds-style-08 {
+  position: relative; background: oklch(100% 0 0 / 0.12); border: 1px solid oklch(100% 0 0 / 0.26);
+  border-radius: 14px; padding: 13px; color: oklch(96% 0.01 240);
+  backdrop-filter: blur(14px); box-shadow: 0 12px 30px oklch(10% 0.02 260 / 0.4);
+}
+.ds-style-08 .w-name { font-size: 12.5px; font-weight: 600; }
+.ds-style-08 .w-badge { padding: 3px 9px; border-radius: 999px; background: oklch(100% 0 0 / 0.15); border: 1px solid oklch(100% 0 0 / 0.22); color: var(--now); font-size: 10.5px; font-weight: 600; }
+.ds-style-08 .w-badge .dot { background: var(--now); box-shadow: 0 0 8px var(--now); }
+.ds-style-08 .tl-track { background: oklch(100% 0 0 / 0.1); }
+.ds-style-08 .tl-track .s-peak { background: var(--peak); opacity: 0.92; }
+.ds-style-08 .tl-track .s-idle { background: var(--idle); opacity: 0.55; }
+.ds-style-08 .tl-cur { background: var(--now); box-shadow: 0 0 8px var(--now); }
+.ds-style-08 .tl-meta { color: oklch(80% 0.02 240); }
+.ds-style-08 .wt th { color: oklch(78% 0.02 240); font-size: 9.5px; letter-spacing: 0.06em; }
+.ds-style-08 .wt td { color: oklch(94% 0.01 240); }
+.ds-style-08 .wt td:not(.n) { color: oklch(82% 0.02 240); }
+.ds-style-08 .wt tr + tr td, .ds-style-08 .wt thead th { border-top: 1px solid oklch(100% 0 0 / 0.15); }
+.ds-style-08 .wt .wtm td { font-weight: 600; }
+.ds-style-08 .n.ci { color: var(--idle); }
+.ds-style-08 .n.cp { color: var(--peak); }
+.ds-pv[data-period='peak'] .ds-style-08 .wt td:nth-child(3),
+.ds-pv[data-period='idle'] .ds-style-08 .wt td:nth-child(2) { background: oklch(100% 0 0 / 0.09); }
+.ds-style-08 .w-foot { color: oklch(74% 0.02 240); border-top: 1px solid oklch(100% 0 0 / 0.12); }
+.ds-style-08 .w-toggle { color: oklch(80% 0.02 240); border-top-color: oklch(100% 0 0 / 0.14); }
+.ds-style-08 .w-toggle:hover { color: oklch(96% 0.01 240); }
+
+.ds-collapsed-08 {
+  width: 44px; height: 54px; background: oklch(100% 0 0 / 0.12); border: 1px solid oklch(100% 0 0 / 0.26);
+  border-radius: 14px; backdrop-filter: blur(14px);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; color: var(--now);
+}
+.ds-collapsed-08 .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--now); box-shadow: 0 0 10px var(--now); }
+.ds-collapsed-08 .lbl { font-size: 10px; font-weight: 600; }
+
+/* ═══════ Style 09 · 昼夜 DayNight · 明暗随时段 ═══════ */
+.ds-style-09, .ds-collapsed-09 {
+  --day-bg: oklch(96% 0.02 85); --day-fg: oklch(32% 0.03 70); --day-mut: oklch(55% 0.04 80); --day-ln: oklch(86% 0.03 90);
+  --night-bg: oklch(24% 0.05 260); --night-fg: oklch(92% 0.02 240); --night-mut: oklch(70% 0.04 250); --night-ln: oklch(42% 0.05 260);
+  --now: oklch(42% 0.15 55);
+  --fg2: var(--day-fg); --mut2: var(--day-mut); --ln: var(--day-ln);
+}
+.ds-pv[data-period='idle'] .ds-style-09, .ds-pv[data-period='idle'] .ds-collapsed-09 {
+  --now: oklch(82% 0.05 250); --fg2: var(--night-fg); --mut2: var(--night-mut); --ln: var(--night-ln);
+}
+
+.ds-style-09 {
+  background: var(--day-bg); border: 1px solid var(--day-ln); border-radius: 14px; padding: 14px;
+  color: var(--fg2); transition: background .35s ease, color .35s ease, border-color .35s ease;
+}
+.ds-pv[data-period='idle'] .ds-style-09 { background: var(--night-bg); border-color: var(--night-ln); }
+.ds-style-09 .w-head { display: flex; align-items: center; gap: 10px; }
+.ds-style-09 .sky svg { width: 20px; height: 20px; color: var(--now); }
+.ds-style-09 .sky .sun { display: block; }
+.ds-style-09 .sky .moon { display: none; }
+.ds-pv[data-period='idle'] .ds-style-09 .sky .sun { display: none; }
+.ds-pv[data-period='idle'] .ds-style-09 .sky .moon { display: block; }
+.ds-style-09 .w-now { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; color: var(--now); }
+.ds-style-09 .w-sub { font-family: ui-monospace, 'JetBrains Mono', 'IBM Plex Mono', 'SF Mono', Menlo, monospace; font-size: 9px; color: var(--mut2); margin: 6px 0 10px; }
+.ds-style-09 .tl-track { background: linear-gradient(90deg, oklch(38% 0.07 260) 0 37.5%, oklch(72% 0.14 60) 37.5% 50%, oklch(46% 0.06 250) 50% 58.34%, oklch(72% 0.14 60) 58.34% 75%, oklch(38% 0.07 260) 75% 100%); }
+.ds-style-09 .tl-cur { background: var(--now); box-shadow: 0 0 6px var(--now); width: 2.5px; height: 12px; top: -3px; }
+.ds-style-09 .tl-meta { color: var(--mut2); }
+.ds-style-09 .wt th { color: var(--mut2); font-size: 9.5px; letter-spacing: 0.05em; }
+.ds-style-09 .wt td { color: var(--fg2); }
+.ds-style-09 .wt tr + tr td, .ds-style-09 .wt thead th { border-top: 1px solid var(--ln); }
+.ds-style-09 .wt .wtm td { font-weight: 600; }
+.ds-pv[data-period='peak'] .ds-style-09 .n.ci { color: oklch(46% 0.08 240); }
+.ds-pv[data-period='peak'] .ds-style-09 .n.cp { color: oklch(42% 0.14 55); font-weight: 700; }
+.ds-pv[data-period='idle'] .ds-style-09 .n.ci { color: oklch(84% 0.06 250); font-weight: 700; }
+.ds-pv[data-period='idle'] .ds-style-09 .n.cp { color: oklch(76% 0.13 70); }
+.ds-style-09 .w-foot { color: var(--mut2); border-top: 1px solid var(--ln); }
+.ds-style-09 .w-toggle { color: var(--mut2); border-top-color: var(--ln); }
+.ds-style-09 .w-toggle:hover { color: var(--fg2); }
+
+.ds-collapsed-09 {
+  width: 42px; height: 56px; border-radius: 12px; background: var(--day-bg); border: 1px solid var(--day-ln);
+  color: var(--fg2); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  transition: background .35s ease;
+}
+.ds-pv[data-period='idle'] .ds-collapsed-09 { background: var(--night-bg); border-color: var(--night-ln); color: var(--night-fg); }
+.ds-collapsed-09 svg { width: 16px; height: 16px; color: var(--now); }
+.ds-collapsed-09 .sun { display: block; }
+.ds-collapsed-09 .moon { display: none; }
+.ds-pv[data-period='idle'] .ds-collapsed-09 .sun { display: none; }
+.ds-pv[data-period='idle'] .ds-collapsed-09 .moon { display: block; }
+.ds-collapsed-09 .lbl { font-size: 9.5px; color: var(--now); font-weight: 600; }
+
+/* ═══════ Style 10 · 编辑 Editorial · 杂志 ═══════ */
+.ds-style-10, .ds-collapsed-10 {
+  --peak: oklch(46% 0.16 40);
+  --idle: oklch(44% 0.09 250);
+  --now: var(--peak);
+}
+.ds-pv[data-period='idle'] .ds-style-10, .ds-pv[data-period='idle'] .ds-collapsed-10 { --now: var(--idle); }
+
+.ds-style-10 {
+  background: oklch(98% 0.005 85); border: 1px solid oklch(86% 0.015 85); border-radius: 2px;
+  padding: 14px; color: oklch(30% 0.02 70);
+}
+.ds-style-10 .w-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.ds-style-10 .w-eyebrow { font-family: ui-monospace, 'JetBrains Mono', 'IBM Plex Mono', 'SF Mono', Menlo, monospace; font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; color: oklch(50% 0.06 250); margin-bottom: 3px; }
+.ds-style-10 .w-name { font-family: 'Iowan Old Style', 'Charter', Georgia, 'Songti SC', serif; font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+.ds-style-10 .w-badge { color: var(--now); font-family: ui-monospace, 'JetBrains Mono', 'IBM Plex Mono', 'SF Mono', Menlo, monospace; font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; }
+.ds-style-10 .w-badge .dot { background: var(--now); }
+.ds-style-10 .tl-track { background: oklch(89% 0.015 85); height: 3px; }
+.ds-style-10 .tl-track .s-idle { background: oklch(80% 0.03 250); }
+.ds-style-10 .tl-track .s-peak { background: var(--peak); }
+.ds-style-10 .tl-cur { background: var(--now); width: 1.5px; height: 11px; top: -4px; }
+.ds-style-10 .tl-meta { font-size: 9px; color: oklch(52% 0.02 80); }
+.ds-style-10 .wt th { font-family: ui-monospace, 'JetBrains Mono', 'IBM Plex Mono', 'SF Mono', Menlo, monospace; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: oklch(52% 0.02 80); border-bottom: 1px solid oklch(30% 0.02 70); }
+.ds-style-10 .wt td { font-size: 11px; color: oklch(34% 0.02 70); }
+.ds-style-10 .wt tr + tr td { border-top: 1px solid oklch(89% 0.015 85); }
+.ds-style-10 .wt .wtm td { font-family: ui-monospace, 'JetBrains Mono', 'IBM Plex Mono', 'SF Mono', Menlo, monospace; font-size: 9.5px; letter-spacing: 0.12em; color: oklch(30% 0.02 70); font-weight: 600; }
+.ds-style-10 .n.ci { color: var(--idle); }
+.ds-style-10 .n.cp { color: var(--peak); }
+.ds-pv[data-period='peak'] .ds-style-10 .wt td:nth-child(3),
+.ds-pv[data-period='idle'] .ds-style-10 .wt td:nth-child(2) { background: color-mix(in oklch, var(--now) 7%, transparent); }
+.ds-style-10 .w-foot { font-family: ui-monospace, 'JetBrains Mono', 'IBM Plex Mono', 'SF Mono', Menlo, monospace; font-size: 9px; color: oklch(55% 0.02 80); border-top: 1px solid oklch(89% 0.015 85); }
+.ds-style-10 .w-toggle { font-family: ui-monospace, 'JetBrains Mono', 'IBM Plex Mono', 'SF Mono', Menlo, monospace; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: oklch(52% 0.02 80); border-top-color: oklch(89% 0.015 85); }
+.ds-style-10 .w-toggle:hover { color: oklch(30% 0.02 70); }
+
+.ds-collapsed-10 {
+  width: 42px; height: 54px; border: 1px solid oklch(86% 0.015 85); border-radius: 2px;
+  background: oklch(98% 0.005 85); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+}
+.ds-collapsed-10 .mark { font-family: 'Iowan Old Style', 'Charter', Georgia, 'Songti SC', serif; font-size: 15px; font-weight: 600; color: var(--now); }
+.ds-collapsed-10 .lbl { font-family: ui-monospace, 'JetBrains Mono', 'IBM Plex Mono', 'SF Mono', Menlo, monospace; font-size: 8.5px; letter-spacing: 0.1em; color: var(--now); }
+
+/* ─── 无障碍：reduced motion 关闭全部动画/过渡 ─────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .ds-pv *, .ds-pv *::before, .ds-pv *::after { animation: none !important; transition: none !important; }
+}

@@ -1,0 +1,1158 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>DeepSeek 分时段计费组件 · 十款风格</title>
+<style>
+/* ─── tokens · bound from tech-utility direction ─────────────── */
+:root {
+  --bg:      oklch(98% 0.005 250);
+  --surface: oklch(100% 0 0);
+  --fg:      oklch(22% 0.02 240);
+  --muted:   oklch(50% 0.018 240);
+  --border:  oklch(90% 0.008 240);
+  --accent:  oklch(58% 0.16 145);
+
+  --font-display: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --font-body:    -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --font-mono:    ui-monospace, 'JetBrains Mono', 'IBM Plex Mono', 'SF Mono', Menlo, monospace;
+
+  --fs-h1: clamp(30px, 4.4vw, 48px);
+  --fs-h2: clamp(22px, 2.8vw, 30px);
+  --gap-sm: 12px; --gap-md: 20px; --gap-lg: 32px;
+  --container: 1180px; --gutter: 28px;
+  --radius: 12px; --radius-lg: 16px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 15px; line-height: 1.55;
+  text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased;
+}
+img, svg { display: block; max-width: 100%; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; cursor: pointer; }
+p { text-wrap: pretty; }
+h1,h2,h3 { text-wrap: balance; }
+button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.container { max-width: var(--container); margin-inline: auto; padding-inline: var(--gutter); }
+.section { padding-block: clamp(40px, 6vw, 72px); }
+.section + .section { border-top: 1px solid var(--border); }
+
+/* ─── topnav + demo toggle ───────────────────────────────────── */
+.topnav {
+  position: sticky; top: 0; z-index: 20;
+  background: color-mix(in oklch, var(--bg) 90%, transparent);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+.topnav-inner { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 12px; flex-wrap: wrap; }
+.brand { display: flex; align-items: baseline; gap: 10px; }
+.brand .logo { font-weight: 700; font-size: 15px; letter-spacing: -0.01em; }
+.brand .sub { font-family: var(--font-mono); font-size: 11px; color: var(--muted); letter-spacing: 0.04em; }
+.seg { display: inline-flex; align-items: center; background: color-mix(in oklch, var(--fg) 5%, transparent); border: 1px solid var(--border); border-radius: 999px; padding: 3px; gap: 2px; }
+.seg button { display: inline-flex; align-items: center; gap: 6px; border: 0; background: transparent; border-radius: 999px; padding: 6px 13px; font-size: 12.5px; font-weight: 600; color: var(--muted); transition: background .15s ease, color .15s ease; }
+.seg button:hover { color: var(--fg); }
+.seg button[aria-pressed="true"] { background: var(--fg); color: var(--surface); }
+.seg .sd { width: 7px; height: 7px; border-radius: 50%; }
+.seg .sd.pk { background: oklch(58% 0.17 45); }
+.seg .sd.id { background: oklch(52% 0.11 220); }
+.seg button[aria-pressed="true"] .sd.pk { background: oklch(82% 0.15 75); }
+.seg button[aria-pressed="true"] .sd.id { background: oklch(78% 0.1 200); }
+.seg .seg-note { font-size: 11px; color: var(--muted); padding-inline: 4px; }
+
+/* ─── hero ───────────────────────────────────────────────────── */
+.hero { padding-block: clamp(56px, 8vw, 96px); }
+.hero-center { text-align: center; max-width: 700px; margin-inline: auto; }
+.eyebrow { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin: 0 0 16px; }
+.hero h1 { font-family: var(--font-display); font-size: var(--fs-h1); line-height: 1.12; letter-spacing: -0.02em; margin: 0 0 16px; font-weight: 700; }
+.hero .lead { font-size: 15.5px; line-height: 1.7; color: var(--muted); margin: 0 auto; max-width: 60ch; }
+.hero .lead b { color: var(--fg); font-weight: 600; }
+
+/* ─── data band ──────────────────────────────────────────────── */
+.data-band { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px 28px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); padding: 20px 26px; }
+@media (max-width: 920px) { .data-band { grid-template-columns: 1fr; } }
+.db-k { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 10px; }
+.db-v { display: flex; align-items: center; gap: 8px; font-size: 13px; line-height: 1.5; color: var(--fg); }
+.db-v + .db-v { margin-top: 4px; }
+.db-v.sub { color: var(--muted); font-size: 12px; }
+.sw { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.sw.pk { background: oklch(56% 0.17 45); }
+.sw.id { background: oklch(52% 0.11 220); }
+
+/* ─── styles grid + specimen cards ───────────────────────────── */
+.grid-head { margin-bottom: 28px; max-width: 680px; }
+.grid-head h2 { font-family: var(--font-display); font-size: var(--fs-h2); letter-spacing: -0.015em; margin: 0; font-weight: 700; }
+.grid-head p { color: var(--muted); font-size: 14px; margin: 8px 0 0; }
+.spec-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; }
+@media (max-width: 1020px) { .spec-grid { grid-template-columns: 1fr; } }
+
+.spec { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px 22px 22px; display: flex; flex-direction: column; gap: 12px; }
+.spec-top { display: flex; align-items: flex-start; gap: 12px; }
+.spec-idx { font-family: var(--font-mono); font-size: 11px; color: var(--muted); padding-top: 2px; }
+.spec-titles h3 { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; margin: 0; }
+.spec-titles .en { font-family: var(--font-mono); font-size: 10.5px; color: var(--muted); letter-spacing: 0.07em; }
+.spec-tags { margin-left: auto; display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.spec-tag { font-size: 10.5px; color: var(--muted); border: 1px solid var(--border); padding: 2px 8px; border-radius: 999px; }
+.spec-desc { font-size: 13px; color: var(--muted); line-height: 1.55; margin: 0; }
+.spec-stages { display: flex; flex-wrap: wrap; gap: 14px 18px; align-items: flex-start; }
+.stage { display: flex; flex-direction: column; gap: 6px; }
+.stage-tag { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.stage-frame { border-radius: 12px; padding: 12px; }
+.stage-frame.exp { width: 268px; }
+.stage-frame.coll { width: 62px; }
+.sb { display: flex; flex-direction: column; }
+.sb .w { margin-bottom: 10px; }
+.sb-set, .rail-set { display: flex; align-items: center; gap: 7px; color: var(--rail, var(--muted)); font-size: 12px; padding: 6px 8px; border-radius: 8px; }
+.sb-set svg, .rail-set svg { width: 14px; height: 14px; }
+.rail { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.rail-set { padding: 4px; }
+.rail-set svg { width: 15px; height: 15px; }
+
+/* ─── shared widget primitives ───────────────────────────────── */
+.w { font-size: 11px; }
+.lpk, .lidle { display: inline; }
+body[data-period="peak"] .lidle, body[data-period="idle"] .lpk { display: none; }
+.tl-bar { position: relative; border-radius: 3px; height: 6px; }
+.tl-track { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; display: flex; }
+.tl-track > i { display: block; }
+.tl-cur { position: absolute; top: -3px; left: 43.75%; width: 2px; height: 12px; background: var(--now); transition: left .3s ease; z-index: 1; }
+body[data-period="idle"] .tl-cur { left: 90%; }
+.tl-meta { margin-top: 6px; font-size: 9.5px; font-family: var(--font-mono); letter-spacing: 0.02em; color: var(--muted); }
+.w-tl { margin-top: 10px; }
+.wt { width: 100%; border-collapse: collapse; table-layout: fixed; margin-top: 9px; }
+.wt th, .wt td { font-size: 11px; line-height: 1.4; padding: 4px 2px; text-align: left; }
+.wt td:nth-child(2), .wt td:nth-child(3), .wt th:nth-child(2), .wt th:nth-child(3) { width: 46px; text-align: right; }
+.wt .n { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.wt .hx { display: block; height: 2px; margin-top: 2px; border-radius: 1px; opacity: 0; transition: opacity .2s ease; }
+body[data-period="peak"] .wt .hx.hp, body[data-period="idle"] .wt .hx.hi { opacity: 1; background: var(--now); }
+.w-foot { margin-top: 8px; padding-top: 6px; font-size: 9.5px; font-family: var(--font-mono); color: var(--muted); letter-spacing: 0.02em; }
+.w-toggle {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  width: 100%; margin-top: 9px; padding: 5px 2px;
+  border: 0; border-top: 1px solid var(--border); background: transparent; text-align: left;
+  font-size: 10px; font-weight: 600; letter-spacing: 0.02em; color: var(--muted);
+  cursor: pointer;
+}
+.w-toggle:hover { color: var(--fg); }
+.w-toggle .t-chev { width: 12px; height: 12px; flex: none; transition: transform .2s ease; }
+.w:not(.is-collapsed) .w-toggle .t-chev { transform: rotate(90deg); }
+.w.is-collapsed .wt, .w.is-collapsed .ttbl,
+.w.is-collapsed .w-foot, .w.is-collapsed .term-foot { display: none; }
+
+/* ═══════ Style 01 · 脉冲 Pulse · 深色科技 ═══════ */
+.ctx-1 { background: oklch(21% 0.018 262); --rail: oklch(72% 0.02 252); }
+.st-1, .st-c-1 { --peak: oklch(80% 0.15 75); --idle: oklch(78% 0.11 195); --now: var(--peak); }
+body[data-period="idle"] .st-1, body[data-period="idle"] .st-c-1 { --now: var(--idle); }
+.st-1 { background: oklch(27% 0.02 262); border: 1px solid oklch(44% 0.03 258); border-radius: 12px; padding: 12px; color: oklch(94% 0.01 250); box-shadow: 0 10px 26px oklch(10% 0.03 260 / 0.45), inset 0 1px 0 oklch(100% 0 0 / 0.06); }
+.st-1 .w-head { display: flex; justify-content: space-between; align-items: center; }
+.st-1 .w-name { font-size: 12px; font-weight: 600; letter-spacing: 0.01em; }
+.st-1 .w-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 999px; background: color-mix(in oklch, var(--now) 16%, transparent); border: 1px solid color-mix(in oklch, var(--now) 32%, transparent); color: var(--now); font-size: 10.5px; font-weight: 600; }
+.st-1 .w-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--now); box-shadow: 0 0 6px var(--now); animation: pulse 2.4s ease-in-out infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .45; } }
+.st-1 .tl-track { background: oklch(20% 0.015 262); border: 1px solid oklch(36% 0.02 258); }
+.st-1 .tl-track .s-idle { background: color-mix(in oklch, var(--idle) 34%, transparent); }
+.st-1 .tl-track .s-peak { background: var(--peak); }
+.st-1 .tl-cur { background: var(--now); box-shadow: 0 0 6px var(--now); top: -2px; height: 10px; }
+.st-1 .tl-meta { color: oklch(64% 0.02 252); }
+.st-1 .wt th { color: oklch(66% 0.02 252); font-size: 9.5px; letter-spacing: 0.06em; }
+.st-1 .wt td { color: oklch(88% 0.01 250); }
+.st-1 .wt td:not(.n) { color: oklch(75% 0.02 250); }
+.st-1 .wt tr + tr td, .st-1 .wt thead th { border-top: 1px solid oklch(38% 0.02 258); }
+.st-1 .wt .wtm td { color: oklch(92% 0.01 250); font-weight: 600; }
+.st-1 .n.ci { color: var(--idle); }
+.st-1 .n.cp { color: var(--peak); }
+body[data-period="peak"] .st-1 .wt td:nth-child(3), body[data-period="peak"] .st-1 .wt th:nth-child(3),
+body[data-period="idle"] .st-1 .wt td:nth-child(2), body[data-period="idle"] .st-1 .wt th:nth-child(2) { background: color-mix(in oklch, var(--now) 9%, transparent); }
+.st-1 .w-foot { color: oklch(60% 0.02 252); }
+.st-1 .w-toggle { color: oklch(66% 0.02 252); border-top-color: oklch(38% 0.02 258); }
+.st-1 .w-toggle:hover { color: oklch(92% 0.01 250); }
+.st-c-1 { width: 42px; height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; background: oklch(27% 0.02 262); border: 1px solid oklch(44% 0.03 258); border-radius: 12px; color: var(--now); }
+.st-c-1 .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--now); box-shadow: 0 0 8px var(--now); animation: pulse 2.4s ease-in-out infinite; }
+.st-c-1 .lbl { font-size: 10px; font-weight: 600; }
+
+/* ═══════ Style 02 · 留白 Minimal · 极简浅色 ═══════ */
+.ctx-2 { background: oklch(96% 0.004 240); --rail: oklch(52% 0.015 240); }
+.st-2, .st-c-2 { --peak: oklch(48% 0.15 40); --idle: oklch(47% 0.1 160); --now: var(--peak); }
+body[data-period="idle"] .st-2, body[data-period="idle"] .st-c-2 { --now: var(--idle); }
+.st-2 { background: oklch(100% 0 0); border: 1px solid oklch(90% 0.006 240); border-radius: 10px; padding: 14px; color: oklch(24% 0.02 240); box-shadow: 0 1px 2px oklch(20% 0.02 240 / 0.04); }
+.st-2 .w-head { display: flex; justify-content: space-between; align-items: center; }
+.st-2 .w-name { font-size: 12.5px; font-weight: 600; }
+.st-2 .w-badge { display: inline-flex; align-items: center; gap: 6px; color: var(--now); font-size: 11px; font-weight: 600; }
+.st-2 .w-badge .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--now); }
+.st-2 .tl-track { background: oklch(95% 0.005 240); }
+.st-2 .tl-track .s-idle { background: oklch(86% 0.09 155); }
+.st-2 .tl-track .s-peak { background: oklch(70% 0.13 42); }
+.st-2 .tl-cur { background: var(--now); width: 2px; height: 10px; top: -2px; }
+.st-2 .tl-meta { color: oklch(56% 0.015 240); }
+.st-2 .wt th { color: oklch(62% 0.015 240); font-size: 9.5px; letter-spacing: 0.05em; }
+.st-2 .wt td { color: oklch(32% 0.02 240); }
+.st-2 .wt tr + tr td, .st-2 .wt thead th { border-top: 1px solid oklch(94% 0.005 240); }
+.st-2 .wt .wtm td { color: oklch(24% 0.02 240); font-weight: 600; }
+.st-2 .n.ci { color: var(--idle); }
+.st-2 .n.cp { color: var(--peak); }
+body[data-period="peak"] .st-2 .wt td:nth-child(3), body[data-period="peak"] .st-2 .wt th:nth-child(3),
+body[data-period="idle"] .st-2 .wt td:nth-child(2), body[data-period="idle"] .st-2 .wt th:nth-child(2) { background: color-mix(in oklch, var(--now) 5%, transparent); }
+.st-2 .w-foot { color: oklch(56% 0.015 240); border-top: 1px solid oklch(94% 0.005 240); }
+.st-2 .w-toggle { color: oklch(56% 0.015 240); border-top-color: oklch(94% 0.005 240); }
+.st-2 .w-toggle:hover { color: oklch(24% 0.02 240); }
+.st-c-2 { width: 42px; height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; background: oklch(100% 0 0); border: 1px solid oklch(90% 0.006 240); border-radius: 10px; color: var(--now); box-shadow: 0 1px 2px oklch(20% 0.02 240 / 0.04); }
+.st-c-2 .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--now); box-shadow: 0 0 6px color-mix(in oklch, var(--now) 40%, transparent); animation: pulse 2.4s ease-in-out infinite; }
+.st-c-2 .lbl { font-size: 10px; font-weight: 600; }
+
+/* ═══════ Style 03 · 票据 Receipt · 票根 ═══════ */
+.ctx-3 { background: oklch(94% 0.012 85); --rail: oklch(52% 0.03 80); }
+.st-3, .st-c-3 { --peak: oklch(48% 0.2 26); --idle: oklch(46% 0.13 235); --now: var(--peak); }
+body[data-period="idle"] .st-3, body[data-period="idle"] .st-c-3 { --now: var(--idle); }
+.st-3 { position: relative; background: oklch(98.5% 0.008 90); border: 1px solid oklch(86% 0.02 80); border-radius: 4px; padding: 12px 14px; color: oklch(34% 0.02 70); box-shadow: 0 1px 0 oklch(86% 0.02 80); font-family: var(--font-mono); }
+.st-3 .w-head { text-align: center; padding-bottom: 2px; }
+.st-3 .w-name { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; }
+.st-3 .w-sub { font-size: 9px; letter-spacing: 0.14em; color: oklch(55% 0.03 80); margin-top: 2px; }
+.st-3 .stamp { position: absolute; top: 10px; right: 12px; transform: rotate(-4deg); border: 1.5px solid var(--now); color: var(--now); padding: 1px 7px; font-size: 12px; font-weight: 700; letter-spacing: 0.12em; border-radius: 3px; opacity: 0.88; }
+.st-3 .w-tear { position: relative; height: 0; margin: 10px 0 8px; border-top: 2px dashed oklch(80% 0.03 80); }
+.st-3 .w-tear::before, .st-3 .w-tear::after { content: ""; position: absolute; top: -7px; width: 14px; height: 14px; border-radius: 50%; background: oklch(94% 0.012 85); }
+.st-3 .w-tear::before { left: -21px; } .st-3 .w-tear::after { right: -21px; }
+.st-3 .w-tl { margin-top: 0; }
+.st-3 .tl-bar { height: 8px; }
+.st-3 .tl-track { background: oklch(94% 0.012 85); border: 1px dashed oklch(80% 0.03 80); }
+.st-3 .tl-track .s-idle { background: color-mix(in oklch, var(--idle) 30%, transparent); }
+.st-3 .tl-track .s-peak { background: color-mix(in oklch, var(--peak) 78%, transparent); }
+.st-3 .tl-cur { background: var(--now); width: 1.5px; height: 12px; top: -2px; }
+.st-3 .tl-meta { color: oklch(55% 0.03 80); }
+.st-3 .wt th { color: oklch(58% 0.03 80); font-size: 9px; letter-spacing: 0.08em; }
+.st-3 .wt td { color: oklch(36% 0.02 70); font-size: 10.5px; }
+.st-3 .wt tr:not(.wtm) td { border-bottom: 1px dotted oklch(80% 0.03 80); }
+.st-3 .wt thead th { border-bottom: 1px solid oklch(70% 0.03 80); }
+.st-3 .wt .wtm td { font-size: 9.5px; letter-spacing: 0.14em; color: oklch(30% 0.02 70); font-weight: 700; }
+.st-3 .n.ci { color: var(--idle); }
+.st-3 .n.cp { color: var(--peak); }
+body[data-period="peak"] .st-3 .wt td:nth-child(3), body[data-period="peak"] .st-3 .wt th:nth-child(3),
+body[data-period="idle"] .st-3 .wt td:nth-child(2), body[data-period="idle"] .st-3 .wt th:nth-child(2) { background: color-mix(in oklch, var(--now) 7%, transparent); }
+.st-3 .w-foot { color: oklch(52% 0.03 80); }
+.st-3 .w-toggle { font-family: var(--font-mono); letter-spacing: 0.06em; color: oklch(52% 0.03 80); border-top: 1px dotted oklch(80% 0.03 80); }
+.st-3 .w-toggle:hover { color: oklch(30% 0.02 70); }
+.st-3 .w-foot .bcode { height: 13px; margin-top: 6px; background: repeating-linear-gradient(90deg, oklch(32% 0.02 70) 0 1.5px, transparent 1.5px 3px, oklch(32% 0.02 70) 3px 5px, transparent 5px 6px); opacity: 0.85; }
+.st-c-3 { width: 42px; height: 54px; position: relative; background: oklch(98.5% 0.008 90); border: 1px solid oklch(86% 0.02 80); border-radius: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: var(--now); }
+.st-c-3 .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--now); }
+.st-c-3 .lbl { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.08em; }
+.st-c-3::before, .st-c-3::after { content: ""; position: absolute; left: 50%; transform: translateX(-50%); width: 16px; height: 8px; border-radius: 0 0 50% 50%; background: oklch(94% 0.012 85); border: 1px solid oklch(86% 0.02 80); border-top: 0; }
+.st-c-3::before { top: -1px; } .st-c-3::after { bottom: -1px; transform: translateX(-50%) rotate(180deg); }
+
+/* ═══════ Style 04 · 时刻线 Metro · 线路图 ═══════ */
+.ctx-4 { background: oklch(96% 0.004 240); --rail: oklch(52% 0.015 240); }
+.st-4, .st-c-4 { --peak: oklch(50% 0.17 45); --idle: oklch(50% 0.11 225); --now: var(--peak); }
+body[data-period="idle"] .st-4, body[data-period="idle"] .st-c-4 { --now: var(--idle); }
+.st-4 { background: oklch(100% 0 0); border: 1px solid oklch(90% 0.006 240); border-radius: 12px; padding: 14px; color: oklch(24% 0.02 240); }
+.st-4 .w-head { display: flex; justify-content: space-between; align-items: center; }
+.st-4 .w-name { font-size: 12.5px; font-weight: 600; }
+.st-4 .w-badge { display: inline-flex; align-items: center; gap: 6px; color: var(--now); font-size: 11px; font-weight: 600; }
+.st-4 .w-badge .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--now); }
+.st-4 .line { position: relative; height: 12px; margin: 14px 2px 0; }
+.st-4 .line::before { content: ""; position: absolute; left: 0; right: 0; top: 4px; height: 4px; border-radius: 2px; background: linear-gradient(90deg, var(--idle) 0 37.5%, var(--peak) 37.5% 50%, var(--idle) 50% 58.34%, var(--peak) 58.34% 75%, var(--idle) 75% 100%); }
+.st-4 .sta { position: absolute; top: 1.5px; width: 9px; height: 9px; margin-left: -4.5px; border-radius: 50%; background: oklch(100% 0 0); border: 2.5px solid oklch(60% 0.03 240); }
+.st-4 .train { position: absolute; top: 0; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%; background: oklch(100% 0 0); border: 3px solid var(--now); left: 43.75%; transition: left .3s ease; box-shadow: 0 0 0 2px color-mix(in oklch, var(--now) 30%, transparent); }
+body[data-period="idle"] .st-4 .train { left: 90%; }
+.st-4 .line-times { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 8.5px; color: oklch(56% 0.015 240); margin-top: 6px; }
+.st-4 .legend { display: flex; gap: 10px; font-size: 9.5px; color: oklch(56% 0.015 240); margin-top: 4px; }
+.st-4 .legend i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+.st-4 .legend .lg-pk { background: var(--peak); } .st-4 .legend .lg-id { background: var(--idle); }
+.st-4 .wt th { color: oklch(62% 0.015 240); font-size: 9.5px; letter-spacing: 0.05em; }
+.st-4 .wt td { color: oklch(32% 0.02 240); }
+.st-4 .wt tr + tr td, .st-4 .wt thead th { border-top: 1px solid oklch(94% 0.005 240); }
+.st-4 .wt .wtm td { color: oklch(24% 0.02 240); font-weight: 600; }
+.st-4 .n.ci { color: var(--idle); }
+.st-4 .n.cp { color: var(--peak); }
+body[data-period="peak"] .st-4 .n.cp, body[data-period="idle"] .st-4 .n.ci { font-weight: 700; }
+.st-4 .w-foot { color: oklch(56% 0.015 240); border-top: 1px solid oklch(94% 0.005 240); }
+.st-4 .w-toggle { color: oklch(56% 0.015 240); border-top-color: oklch(94% 0.005 240); }
+.st-4 .w-toggle:hover { color: oklch(24% 0.02 240); }
+.st-c-4 { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.st-c-4 .mini { width: 16px; height: 44px; border-radius: 3px; background: linear-gradient(180deg, var(--idle) 0 37.5%, var(--peak) 37.5% 50%, var(--idle) 50% 58.34%, var(--peak) 58.34% 75%, var(--idle) 75% 100%); position: relative; }
+.st-c-4 .train { position: absolute; left: 50%; margin-left: -4px; top: 37.5%; width: 8px; height: 8px; border-radius: 50%; background: oklch(100% 0 0); border: 2px solid var(--now); box-shadow: 0 0 0 1.5px color-mix(in oklch, var(--now) 35%, transparent); transition: top .3s ease; }
+body[data-period="idle"] .st-c-4 .train { top: 84%; }
+.st-c-4 .lbl { font-family: var(--font-mono); font-size: 9px; color: var(--now); font-weight: 600; }
+
+/* ═══════ Style 05 · 胶囊 Pills · 圆润亲和 ═══════ */
+.ctx-5 { background: oklch(96% 0.01 90); --rail: oklch(52% 0.02 80); }
+.st-5, .st-c-5 { --peak: oklch(48% 0.15 45); --idle: oklch(48% 0.1 220); --now: var(--peak); --pk-fg: oklch(40% 0.15 45); --id-fg: oklch(40% 0.1 220); --pk-bg: oklch(92% 0.06 60); --id-bg: oklch(92% 0.05 215); }
+body[data-period="idle"] .st-5, body[data-period="idle"] .st-c-5 { --now: var(--idle); }
+.st-5 { background: oklch(100% 0 0); border: 1px solid oklch(92% 0.008 90); border-radius: 18px; padding: 14px; color: oklch(28% 0.02 90); }
+.st-5 .w-head { display: flex; justify-content: space-between; align-items: center; }
+.st-5 .w-name { font-size: 12.5px; font-weight: 600; }
+.st-5 .w-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 11px; border-radius: 999px; background: color-mix(in oklch, var(--now) 13%, oklch(100% 0 0)); color: var(--now); font-size: 11px; font-weight: 600; }
+.st-5 .w-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--now); }
+.st-5 .tl-bar { height: 8px; }
+.st-5 .tl-track { gap: 3px; }
+.st-5 .tl-track > i { border-radius: 6px; }
+.st-5 .tl-track .s-idle { background: var(--id-bg); }
+.st-5 .tl-track .s-peak { background: var(--pk-bg); }
+.st-5 .tl-cur { background: var(--now); width: 3px; height: 12px; top: -2px; border-radius: 2px; }
+.st-5 .tl-meta { color: oklch(56% 0.02 90); }
+.st-5 .wt th { color: oklch(62% 0.02 90); font-size: 9.5px; }
+.st-5 .wt td { color: oklch(34% 0.02 90); }
+.st-5 .wt tr + tr td, .st-5 .wt thead th { border-top: 1px solid oklch(94% 0.01 90); }
+.st-5 .wt .n { border-radius: 7px; padding: 1px 5px; }
+.st-5 .wt .n.ci { color: var(--id-fg); background: var(--id-bg); }
+.st-5 .wt .n.cp { color: var(--pk-fg); background: var(--pk-bg); }
+.st-5 .wt .wtm td { font-weight: 700; }
+body[data-period="peak"] .st-5 .wt td:nth-child(3), body[data-period="idle"] .st-5 .wt td:nth-child(2) { box-shadow: inset 0 -2px 0 var(--now); border-radius: 4px; }
+.st-5 .w-foot { color: oklch(55% 0.02 90); }
+.st-5 .w-toggle { color: oklch(55% 0.02 90); border-top-color: oklch(94% 0.01 90); }
+.st-5 .w-toggle:hover { color: oklch(28% 0.02 90); }
+.st-c-5 { display: flex; align-items: center; gap: 6px; padding: 9px 12px; border-radius: 999px; background: color-mix(in oklch, var(--now) 13%, oklch(100% 0 0)); color: var(--now); border: 1px solid color-mix(in oklch, var(--now) 26%, transparent); font-size: 11px; font-weight: 600; }
+.st-c-5 .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--now); }
+
+/* ═══════ Style 06 · 终端 Terminal · CLI 日志 ═══════ */
+.ctx-6 { background: oklch(15% 0.01 260); --rail: oklch(64% 0.02 240); }
+.st-6, .st-c-6 { --peak: oklch(80% 0.15 85); --idle: oklch(72% 0.14 150); --now: var(--peak); }
+body[data-period="idle"] .st-6, body[data-period="idle"] .st-c-6 { --now: var(--idle); }
+.st-6 { background: oklch(19% 0.012 260); border: 1px solid oklch(38% 0.02 260); border-radius: 8px; overflow: hidden; color: oklch(86% 0.02 150); font-family: var(--font-mono); }
+.st-6 .term-bar { display: flex; align-items: center; gap: 6px; padding: 7px 10px; background: oklch(16% 0.012 260); border-bottom: 1px solid oklch(34% 0.02 260); }
+.st-6 .term-bar .tdot { width: 8px; height: 8px; border-radius: 50%; background: oklch(55% 0.02 260); }
+.st-6 .term-bar .tname { font-size: 10px; color: oklch(68% 0.02 240); margin-left: 4px; letter-spacing: 0.04em; }
+.st-6 .term-body { padding: 10px 12px 8px; }
+.st-6 .tline { display: flex; gap: 6px; font-size: 10.5px; line-height: 1.7; white-space: nowrap; }
+.st-6 .tline .ps { color: oklch(60% 0.02 240); }
+.st-6 .tline .txt { color: oklch(84% 0.02 150); }
+.st-6 .tline .nowv { color: var(--now); font-weight: 700; }
+.st-6 .tline .dim { color: oklch(56% 0.02 240); }
+.st-6 .ttbl { margin-top: 8px; font-size: 10.5px; line-height: 1.75; }
+.st-6 .tt-row, .st-6 .tt-head { display: flex; justify-content: space-between; gap: 8px; }
+.st-6 .tt-head { color: oklch(56% 0.02 240); font-size: 9.5px; border-bottom: 1px dashed oklch(36% 0.02 260); margin-bottom: 2px; padding-bottom: 2px; }
+.st-6 .tt-row .m { color: oklch(80% 0.02 160); }
+.st-6 .tt-row .p { display: flex; gap: 8px; }
+.st-6 .tt-row .n { width: 38px; text-align: right; }
+.st-6 .tt-row .n.idle { color: var(--idle); }
+.st-6 .tt-row .n.peak { color: var(--peak); }
+body[data-period="peak"] .st-6 .tt-row .n.peak, body[data-period="idle"] .st-6 .tt-row .n.idle { font-weight: 700; }
+.st-6 .term-foot { border-top: 1px solid oklch(34% 0.02 260); padding: 7px 12px; font-size: 9.5px; color: oklch(54% 0.02 240); }
+.st-6 .w-toggle { font-family: var(--font-mono); color: oklch(58% 0.02 240); border-top-color: oklch(34% 0.02 260); }
+.st-6 .w-toggle:hover { color: oklch(88% 0.02 150); }
+.st-c-6 { width: 42px; height: 54px; background: oklch(19% 0.012 260); border: 1px solid oklch(38% 0.02 260); border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-family: var(--font-mono); color: var(--now); }
+.st-c-6 .caret { font-size: 14px; font-weight: 700; }
+.st-c-6 .lbl { font-size: 9.5px; }
+
+/* ═══════ Style 07 · 粗野 Brutalist · 硬边高对比 ═══════ */
+.ctx-7 { background: oklch(95% 0.004 60); --rail: oklch(45% 0.005 60); }
+.st-7, .st-c-7 { --peak: oklch(50% 0.2 25); --idle: oklch(44% 0.12 230); --now: var(--peak); }
+body[data-period="idle"] .st-7, body[data-period="idle"] .st-c-7 { --now: var(--idle); }
+.st-7 { background: oklch(100% 0 0); border: 2px solid oklch(20% 0 0); border-radius: 0; padding: 12px; box-shadow: 5px 5px 0 0 oklch(20% 0 0); color: oklch(22% 0 0); }
+.st-7 .w-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.st-7 .w-name { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.st-7 .w-badge { display: inline-flex; padding: 3px 9px; background: var(--now); color: oklch(100% 0 0); font-family: var(--font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; }
+.st-7 .tl-track { gap: 2px; background: oklch(20% 0 0); border-radius: 0; }
+.st-7 .tl-track .s-idle { background: oklch(78% 0.02 200); }
+.st-7 .tl-track .s-peak { background: var(--peak); }
+.st-7 .tl-cur { width: 4px; height: 16px; top: -3px; background: var(--now); }
+.st-7 .tl-meta { font-family: var(--font-mono); font-size: 9px; color: oklch(45% 0 0); }
+.st-7 .wt th { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.06em; color: oklch(45% 0 0); }
+.st-7 .wt td { font-size: 11px; color: oklch(25% 0 0); }
+.st-7 .wt thead th { border-top: 2px solid oklch(20% 0 0); border-bottom: 2px solid oklch(20% 0 0); }
+.st-7 .wt tr + tr td { border-top: 1.5px solid oklch(20% 0 0); }
+.st-7 .wt .wtm td { font-family: var(--font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.1em; }
+.st-7 .n.ci { color: var(--idle); font-weight: 700; }
+.st-7 .n.cp { color: var(--peak); font-weight: 700; }
+body[data-period="peak"] .st-7 .n.cp, body[data-period="idle"] .st-7 .n.ci { background: oklch(20% 0 0); color: oklch(100% 0 0); }
+.st-7 .w-foot { font-family: var(--font-mono); font-size: 9px; color: oklch(45% 0 0); border-top: 1.5px solid oklch(20% 0 0); padding-top: 6px; }
+.st-7 .w-toggle { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: oklch(45% 0 0); border-top: 1.5px solid oklch(20% 0 0); }
+.st-7 .w-toggle:hover { color: oklch(20% 0 0); }
+.st-c-7 { width: 44px; height: 52px; background: oklch(100% 0 0); border: 2px solid oklch(20% 0 0); border-radius: 0; box-shadow: 4px 4px 0 0 oklch(20% 0 0); display: grid; place-items: center; }
+.st-c-7 .box { width: 20px; height: 20px; background: var(--now); color: oklch(100% 0 0); font-family: var(--font-mono); font-size: 10px; font-weight: 700; display: grid; place-items: center; }
+
+/* ═══════ Style 08 · 玻璃 Glass · 毛玻璃 ═══════ */
+.ctx-8 { background: linear-gradient(150deg, oklch(26% 0.04 250), oklch(20% 0.03 230) 55%, oklch(24% 0.045 190)); position: relative; overflow: hidden; --rail: oklch(82% 0.02 240); }
+.ctx-8 .blob { position: absolute; border-radius: 50%; filter: blur(38px); opacity: 0.55; pointer-events: none; }
+.ctx-8 .b1 { width: 96px; height: 96px; background: oklch(62% 0.16 60); top: -24px; right: -14px; }
+.ctx-8 .b2 { width: 84px; height: 84px; background: oklch(56% 0.12 220); bottom: -20px; left: -10px; }
+.st-8, .st-c-8 { --peak: oklch(72% 0.15 70); --idle: oklch(74% 0.1 200); --now: var(--peak); }
+body[data-period="idle"] .st-8, body[data-period="idle"] .st-c-8 { --now: var(--idle); }
+.st-8 { position: relative; background: oklch(100% 0 0 / 0.12); border: 1px solid oklch(100% 0 0 / 0.26); border-radius: 14px; padding: 13px; color: oklch(96% 0.01 240); backdrop-filter: blur(14px); box-shadow: 0 12px 30px oklch(10% 0.02 260 / 0.4); }
+.st-8 .w-head { display: flex; justify-content: space-between; align-items: center; }
+.st-8 .w-name { font-size: 12.5px; font-weight: 600; }
+.st-8 .w-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 999px; background: oklch(100% 0 0 / 0.15); border: 1px solid oklch(100% 0 0 / 0.22); color: var(--now); font-size: 10.5px; font-weight: 600; }
+.st-8 .w-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--now); box-shadow: 0 0 8px var(--now); }
+.st-8 .tl-track { background: oklch(100% 0 0 / 0.1); }
+.st-8 .tl-track .s-peak { background: var(--peak); opacity: 0.92; }
+.st-8 .tl-track .s-idle { background: var(--idle); opacity: 0.55; }
+.st-8 .tl-cur { background: var(--now); box-shadow: 0 0 8px var(--now); }
+.st-8 .tl-meta { color: oklch(80% 0.02 240); }
+.st-8 .wt th { color: oklch(78% 0.02 240); font-size: 9.5px; letter-spacing: 0.06em; }
+.st-8 .wt td { color: oklch(94% 0.01 240); }
+.st-8 .wt td:not(.n) { color: oklch(82% 0.02 240); }
+.st-8 .wt tr + tr td, .st-8 .wt thead th { border-top: 1px solid oklch(100% 0 0 / 0.15); }
+.st-8 .wt .wtm td { font-weight: 600; }
+.st-8 .n.ci { color: var(--idle); }
+.st-8 .n.cp { color: var(--peak); }
+body[data-period="peak"] .st-8 .wt td:nth-child(3), body[data-period="idle"] .st-8 .wt td:nth-child(2) { background: oklch(100% 0 0 / 0.09); }
+.st-8 .w-foot { color: oklch(74% 0.02 240); border-top: 1px solid oklch(100% 0 0 / 0.12); }
+.st-8 .w-toggle { color: oklch(80% 0.02 240); border-top-color: oklch(100% 0 0 / 0.14); }
+.st-8 .w-toggle:hover { color: oklch(96% 0.01 240); }
+.st-c-8 { width: 44px; height: 54px; background: oklch(100% 0 0 / 0.12); border: 1px solid oklch(100% 0 0 / 0.26); border-radius: 14px; backdrop-filter: blur(14px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; color: var(--now); }
+.st-c-8 .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--now); box-shadow: 0 0 10px var(--now); }
+.st-c-8 .lbl { font-size: 10px; font-weight: 600; }
+
+/* ═══════ Style 09 · 昼夜 DayNight · 明暗随时段 ═══════ */
+.ctx-9 { background: linear-gradient(180deg, oklch(90% 0.03 90), oklch(88% 0.03 230)); --rail: oklch(48% 0.02 240); }
+.st-9, .st-c-9 {
+  --day-bg: oklch(96% 0.02 85); --day-fg: oklch(32% 0.03 70); --day-mut: oklch(55% 0.04 80); --day-ln: oklch(86% 0.03 90);
+  --night-bg: oklch(24% 0.05 260); --night-fg: oklch(92% 0.02 240); --night-mut: oklch(70% 0.04 250); --night-ln: oklch(42% 0.05 260);
+  --now: oklch(42% 0.15 55); --fg2: var(--day-fg); --mut2: var(--day-mut); --ln: var(--day-ln);
+}
+body[data-period="idle"] .st-9, body[data-period="idle"] .st-c-9 { --now: oklch(82% 0.05 250); --fg2: var(--night-fg); --mut2: var(--night-mut); --ln: var(--night-ln); }
+.st-9 { background: var(--day-bg); border: 1px solid var(--day-ln); border-radius: 14px; padding: 14px; color: var(--fg2); transition: background .35s ease, color .35s ease, border-color .35s ease; }
+body[data-period="idle"] .st-9 { background: var(--night-bg); border-color: var(--night-ln); }
+.st-9 .w-head { display: flex; align-items: center; gap: 10px; }
+.st-9 .sky svg { width: 20px; height: 20px; color: var(--now); }
+.st-9 .sky .sun { display: block; } .st-9 .sky .moon { display: none; }
+body[data-period="idle"] .st-9 .sky .sun { display: none; } body[data-period="idle"] .st-9 .sky .moon { display: block; }
+.st-9 .w-now { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; color: var(--now); }
+.st-9 .w-sub { font-family: var(--font-mono); font-size: 9px; color: var(--mut2); margin: 6px 0 10px; }
+.st-9 .tl-track { background: linear-gradient(90deg, oklch(38% 0.07 260) 0 37.5%, oklch(72% 0.14 60) 37.5% 50%, oklch(46% 0.06 250) 50% 58.34%, oklch(72% 0.14 60) 58.34% 75%, oklch(38% 0.07 260) 75% 100%); }
+.st-9 .tl-cur { background: var(--now); box-shadow: 0 0 6px var(--now); width: 2.5px; height: 12px; top: -3px; }
+.st-9 .tl-meta { color: var(--mut2); }
+.st-9 .wt th { color: var(--mut2); font-size: 9.5px; letter-spacing: 0.05em; }
+.st-9 .wt td { color: var(--fg2); }
+.st-9 .wt tr + tr td, .st-9 .wt thead th { border-top: 1px solid var(--ln); }
+.st-9 .wt .wtm td { font-weight: 600; }
+body[data-period="peak"] .st-9 .n.ci { color: oklch(46% 0.08 240); }
+body[data-period="peak"] .st-9 .n.cp { color: oklch(42% 0.14 55); font-weight: 700; }
+body[data-period="idle"] .st-9 .n.ci { color: oklch(84% 0.06 250); font-weight: 700; }
+body[data-period="idle"] .st-9 .n.cp { color: oklch(76% 0.13 70); }
+.st-9 .w-foot { color: var(--mut2); border-top: 1px solid var(--ln); }
+.st-9 .w-toggle { color: var(--mut2); border-top-color: var(--ln); }
+.st-9 .w-toggle:hover { color: var(--fg2); }
+.st-c-9 { width: 42px; height: 56px; border-radius: 12px; background: var(--day-bg); border: 1px solid var(--day-ln); color: var(--fg2); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; transition: background .35s ease; }
+body[data-period="idle"] .st-c-9 { background: var(--night-bg); border-color: var(--night-ln); color: var(--night-fg); }
+.st-c-9 svg { width: 16px; height: 16px; color: var(--now); }
+.st-c-9 .sun { display: block; } .st-c-9 .moon { display: none; }
+body[data-period="idle"] .st-c-9 .sun { display: none; } body[data-period="idle"] .st-c-9 .moon { display: block; }
+.st-c-9 .lbl { font-size: 9.5px; color: var(--now); font-weight: 600; }
+
+/* ═══════ Style 10 · 编辑 Editorial · 杂志 ═══════ */
+.ctx-10 { background: oklch(94% 0.008 85); --rail: oklch(50% 0.02 80); }
+.st-10, .st-c-10 { --peak: oklch(46% 0.16 40); --idle: oklch(44% 0.09 250); --now: var(--peak); }
+body[data-period="idle"] .st-10, body[data-period="idle"] .st-c-10 { --now: var(--idle); }
+.st-10 { background: oklch(98% 0.005 85); border: 1px solid oklch(86% 0.015 85); border-radius: 2px; padding: 14px; color: oklch(30% 0.02 70); }
+.st-10 .w-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.st-10 .w-eyebrow { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; color: oklch(50% 0.06 250); margin-bottom: 3px; }
+.st-10 .w-name { font-family: 'Iowan Old Style', 'Charter', Georgia, 'Songti SC', serif; font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+.st-10 .w-badge { display: inline-flex; align-items: center; gap: 5px; color: var(--now); font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; }
+.st-10 .w-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--now); }
+.st-10 .tl-track { background: oklch(89% 0.015 85); height: 3px; }
+.st-10 .tl-track .s-idle { background: oklch(80% 0.03 250); }
+.st-10 .tl-track .s-peak { background: var(--peak); }
+.st-10 .tl-cur { background: var(--now); width: 1.5px; height: 11px; top: -4px; }
+.st-10 .tl-meta { font-size: 9px; color: oklch(52% 0.02 80); }
+.st-10 .wt th { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: oklch(52% 0.02 80); border-bottom: 1px solid oklch(30% 0.02 70); }
+.st-10 .wt td { font-size: 11px; color: oklch(34% 0.02 70); }
+.st-10 .wt tr + tr td { border-top: 1px solid oklch(89% 0.015 85); }
+.st-10 .wt .wtm td { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.12em; color: oklch(30% 0.02 70); font-weight: 600; }
+.st-10 .n.ci { color: var(--idle); }
+.st-10 .n.cp { color: var(--peak); }
+body[data-period="peak"] .st-10 .wt td:nth-child(3), body[data-period="idle"] .st-10 .wt td:nth-child(2) { background: color-mix(in oklch, var(--now) 7%, transparent); }
+.st-10 .w-foot { font-family: var(--font-mono); font-size: 9px; color: oklch(55% 0.02 80); border-top: 1px solid oklch(89% 0.015 85); }
+.st-10 .w-toggle { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: oklch(52% 0.02 80); border-top-color: oklch(89% 0.015 85); }
+.st-10 .w-toggle:hover { color: oklch(30% 0.02 70); }
+.st-c-10 { width: 42px; height: 54px; border: 1px solid oklch(86% 0.015 85); border-radius: 2px; background: oklch(98% 0.005 85); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; }
+.st-c-10 .mark { font-family: 'Iowan Old Style', 'Charter', Georgia, 'Songti SC', serif; font-size: 15px; font-weight: 600; color: var(--now); }
+.st-c-10 .lbl { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.1em; color: var(--now); }
+
+/* ─── footer ─────────────────────────────────────────────────── */
+.footer { padding-block: 40px 56px; border-top: 1px solid var(--border); }
+.footer .f-title { font-size: 16px; font-weight: 700; margin: 0 0 6px; }
+.footer .f-note { color: var(--muted); font-size: 13px; margin: 0; max-width: 72ch; }
+
+/* ─── responsive + motion ────────────────────────────────────── */
+@media (max-width: 640px) {
+  .spec-stages { flex-direction: column; }
+  .spec-tags { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body data-period="peak">
+
+<header class="topnav" data-od-id="topnav">
+  <div class="container topnav-inner">
+    <div class="brand">
+      <span class="logo">DeepSeek Harness</span>
+      <span class="sub">分时段计费组件 · 十款风格</span>
+    </div>
+    <div class="seg" role="group" aria-label="模拟时段" data-od-id="period-toggle">
+      <span class="seg-note">模拟时段</span>
+      <button type="button" data-set-period="peak" aria-pressed="true"><i class="sd pk"></i>高峰</button>
+      <button type="button" data-set-period="idle" aria-pressed="false"><i class="sd id"></i>空闲</button>
+    </div>
+  </div>
+</header>
+
+<main id="content">
+
+  <section class="section hero" data-od-id="hero">
+    <div class="container">
+      <div class="hero-center">
+        <p class="eyebrow">DeepSeek Harness · 左侧边栏小组件</p>
+        <h1>DeepSeek 分时段计费组件，十款风格供你挑选</h1>
+        <p class="lead">按北京时间自动判定<b>高峰（09:00–12:00、14:00–18:00）</b>与<b>空闲</b>时段，用颜色区分并以紧凑价格表展示 V4-Flash / V4-Pro 单价。展开侧边栏显示完整报价，收起后缩为紧凑指示；置于左下角、设置上方。用页面右上角的开关切换时段，即可预览十款风格的高峰 / 空闲表现。</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" data-od-id="data-band" style="padding-top: 0; padding-bottom: 8px;">
+    <div class="container">
+      <div class="data-band">
+        <div>
+          <span class="db-k">时段规则 · 北京时间</span>
+          <span class="db-v"><i class="sw pk"></i>高峰　09:00–12:00 · 14:00–18:00</span>
+          <span class="db-v"><i class="sw id"></i>空闲　其余全部时段</span>
+        </div>
+        <div>
+          <span class="db-k">价格口径</span>
+          <span class="db-v">单位：元 / 百万 tokens　·　高峰 = 空闲 × 2</span>
+          <span class="db-v sub">来源：IT之家公开的 DeepSeek V4 报价 · 仅作演示</span>
+        </div>
+        <div>
+          <span class="db-k">组件位置</span>
+          <span class="db-v">左侧边栏 · 左下角 · 设置上方</span>
+          <span class="db-v sub">收起侧边栏时折叠为紧凑指示器</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" data-od-id="styles-grid">
+    <div class="container">
+      <div class="grid-head">
+        <h2>十款风格 · 展开 / 收起双态预览</h2>
+        <p>每款同时展示「展开侧边栏（左）」与「收起图标栏（右）」两种形态，并标出下方设置项以示意实际位置。高峰 = 暖色，空闲 = 冷色，为全系列统一的语义。</p>
+      </div>
+
+      <div class="spec-grid">
+
+        <!-- 01 脉冲 -->
+        <article class="spec" data-od-id="style-1">
+          <div class="spec-top">
+            <span class="spec-idx">01</span>
+            <div class="spec-titles">
+              <h3>脉冲 Pulse</h3>
+              <span class="en">DARK · NEON DOT · TECH</span>
+            </div>
+            <div class="spec-tags"><span class="spec-tag">深色</span><span class="spec-tag">发光</span><span class="spec-tag">科技</span></div>
+          </div>
+          <p class="spec-desc">深色开发环境友好：当前时段以发光圆点脉冲提示，适合常驻侧边栏的暗色主题。</p>
+          <div class="spec-stages">
+            <div class="stage">
+              <span class="stage-tag">展开 · 侧边栏</span>
+              <div class="stage-frame exp ctx-1">
+                <div class="sb">
+                  <div class="w st-1" data-od-id="style-1-widget">
+                    <div class="w-head">
+                      <span class="w-name">DeepSeek 计费</span>
+                      <span class="w-badge"><i class="dot"></i><span class="lpk">高峰</span><span class="lidle">空闲</span></span>
+                    </div>
+                    <div class="w-tl">
+                      <div class="tl-bar"><div class="tl-track"><i class="s-idle" style="width:37.5%"></i><i class="s-peak" style="width:12.5%"></i><i class="s-idle" style="width:8.34%"></i><i class="s-peak" style="width:16.66%"></i><i class="s-idle" style="width:25%"></i></div><span class="tl-cur"></span></div>
+                      <div class="tl-meta">高峰 09:00–12:00 · 14:00–18:00｜其余空闲</div>
+                    </div>
+                    <button class="w-toggle" type="button" aria-expanded="true"><span>价格表</span><svg class="t-chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg></button>
+                    <table class="wt">
+                      <thead><tr><th>计费项</th><th>空闲<i class="hx hi"></i></th><th>高峰<i class="hx hp"></i></th></tr></thead>
+                      <tbody>
+                        <tr class="wtm"><td colspan="3">V4-Flash</td></tr>
+                        <tr><td>输入 · 缓存命中</td><td class="n ci">0.05</td><td class="n cp">0.10</td></tr>
+                        <tr><td>输入 · 缓存未命中</td><td class="n ci">1.50</td><td class="n cp">3.00</td></tr>
+                        <tr><td>输出</td><td class="n ci">4.50</td><td class="n cp">9.00</td></tr>
+                        <tr class="wtm"><td colspan="3">V4-Pro</td></tr>
+                        <tr><td>输入 · 缓存命中</td><td class="n ci">0.15</td><td class="n cp">0.30</td></tr>
+                        <tr><td>输入 · 缓存未命中</td><td class="n ci">4.50</td><td class="n cp">9.00</td></tr>
+                        <tr><td>输出</td><td class="n ci">13.50</td><td class="n cp">27.00</td></tr>
+                      </tbody>
+                    </table>
+                    <div class="w-foot">元 / 百万 tokens · 北京时间</div>
+                  </div>
+                  <div class="sb-set"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>设置</div>
+                </div>
+              </div>
+            </div>
+            <div class="stage">
+              <span class="stage-tag">收起 · 图标栏</span>
+              <div class="stage-frame coll ctx-1">
+                <div class="rail">
+                  <div class="w-c st-c-1" data-od-id="style-1-collapsed"><i class="dot"></i><span class="lbl"><span class="lpk">峰</span><span class="lidle">闲</span></span></div>
+                  <div class="rail-set"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- 02 留白 -->
+        <article class="spec" data-od-id="style-2">
+          <div class="spec-top">
+            <span class="spec-idx">02</span>
+            <div class="spec-titles">
+              <h3>留白 Minimal</h3>
+              <span class="en">LIGHT · HAIRLINE · RESTRAINED</span>
+            </div>
+            <div class="spec-tags"><span class="spec-tag">浅色</span><span class="spec-tag">极简</span><span class="spec-tag">细线</span></div>
+          </div>
+          <p class="spec-desc">克制的浅色卡片：一个彩色圆点 + 一段细时间轴，数字即信息，几乎零装饰。</p>
+          <div class="spec-stages">
+            <div class="stage">
+              <span class="stage-tag">展开 · 侧边栏</span>
+              <div class="stage-frame exp ctx-2">
+                <div class="sb">
+                  <div class="w st-2" data-od-id="style-2-widget">
+                    <div class="w-head">
+                      <span class="w-name">DeepSeek 计费</span>
+                      <span class="w-badge"><i class="dot"></i><span class="lpk">高峰</span><span class="lidle">空闲</span></span>
+                    </div>
+                    <div class="w-tl">
+                      <div class="tl-bar"><div class="tl-track"><i class="s-idle" style="width:37.5%"></i><i class="s-peak" style="width:12.5%"></i><i class="s-idle" style="width:8.34%"></i><i class="s-peak" style="width:16.66%"></i><i class="s-idle" style="width:25%"></i></div><span class="tl-cur"></span></div>
+                      <div class="tl-meta">高峰 09:00–12:00 · 14:00–18:00｜其余空闲</div>
+                    </div>
+                    <button class="w-toggle" type="button" aria-expanded="true"><span>价格表</span><svg class="t-chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg></button>
+                    <table class="wt">
+                      <thead><tr><th>计费项</th><th>空闲<i class="hx hi"></i></th><th>高峰<i class="hx hp"></i></th></tr></thead>
+                      <tbody>
+                        <tr class="wtm"><td colspan="3">V4-Flash</td></tr>
+                        <tr><td>输入 · 缓存命中</td><td class="n ci">0.05</td><td class="n cp">0.10</td></tr>
+                        <tr><td>输入 · 缓存未命中</td><td class="n ci">1.50</td><td class="n cp">3.00</td></tr>
+                        <tr><td>输出</td><td class="n ci">4.50</td><td class="n cp">9.00</td></tr>
+                        <tr class="wtm"><td colspan="3">V4-Pro</td></tr>
+                        <tr><td>输入 · 缓存命中</td><td class="n ci">0.15</td><td class="n cp">0.30</td></tr>
+                        <tr><td>输入 · 缓存未命中</td><td class="n ci">4.50</td><td class="n cp">9.00</td></tr>
+                        <tr><td>输出</td><td class="n ci">13.50</td><td class="n cp">27.00</td></tr>
+                      </tbody>
+                    </table>
+                    <div class="w-foot">元 / 百万 tokens · 北京时间</div>
+                  </div>
+                  <div class="sb-set"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>设置</div>
+                </div>
+              </div>
+            </div>
+            <div class="stage">
+              <span class="stage-tag">收起 · 图标栏</span>
+              <div class="stage-frame coll ctx-2">
+                <div class="rail">
+                  <div class="w-c st-c-2" data-od-id="style-2-collapsed"><i class="dot"></i><span class="lbl"><span class="lpk">峰</span><span class="lidle">闲</span></span></div>
+                  <div class="rail-set"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- 03 票据 -->
+        <article class="spec" data-od-id="style-3">
+          <div class="spec-top">
+            <span class="spec-idx">03</span>
+            <div class="spec-titles">
+              <h3>票据 Receipt</h3>
+              <span class="en">PAPER · MONO · STAMP</span>
+            </div>
+            <div class="spec-tags"><span class="spec-tag">浅色</span><span class="spec-tag">纸质</span><span class="spec-tag">盖章</span></div>
+          </div>
+          <p class="spec-desc">收据 / 票根质感：等宽对账排版，当前时段像一枚斜盖的印戳，附锯齿撕线与条形码。</p>
+          <div class="spec-stages">
+            <div class="stage">
+              <span class="stage-tag">展开 · 侧边栏</span>
+              <div class="stage-frame exp ctx-3">
+                <div class="sb">
+                  <div class="w st-3" data-od-id="style-3-widget">
+                    <span class="stamp"><span class="lpk">高峰</span><span class="lidle">空闲</span></span>
+                    <div class="w-head">
+                      <div class="w-name">DeepSeek 分时段计费</div>
+                      <div class="w-sub">凭条 · 北京时间</div>
+                    </div>
+                    <div class="w-tear"></div>
+                    <div class="w-tl">
+                      <div class="tl-bar"><div class="tl-track"><i class="s-idle" style="width:37.5%"></i><i class="s-peak" style="width:12.5%"></i><i class="s-idle" style="width:8.34%"></i><i class="s-peak" style="width:16.66%"></i><i class="s-idle" style="width:25%"></i></div><span class="tl-cur"></span></div>
+                      <div class="tl-meta">高峰 09:00–12:00 · 14:00–18:00｜其余空闲</div>
+                    </div>
+                    <button class="w-toggle" type="button" aria-expanded="true"><span>价格表</span><svg class="t-chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg></button>
+                    <table class="wt">
+                      <thead><tr><th>计费项</th><th>空闲<i class="hx hi"></i></th><th>高峰<i class="hx hp"></i></th></tr></thead>
+                      <tbody>
+                        <tr class="wtm"><td colspan="3">V4-FLASH</td></tr>
+                        <tr><td>输入 · 缓存命中</td><td class="n ci">0.05</td><td class="n cp">0.10</td></tr>
+                        <tr><td>输入 · 缓存未命中</td><td class="n ci">1.50</td><td class="n cp">3.00</td></tr>
+                        <tr><td>输出</td><td class="n ci">4.50</td><td class="n cp">9.00</td></tr>
+                        <tr class="wtm"><td colspan="3">V4-PRO</td></tr>
+                        <tr><td>输入 · 缓存命中</td><td class="n ci">0.15</td><td class="n cp">0.30</td></tr>
+                        <tr><td>输入 · 缓存未命中</td><td class="n ci">4.50</td><td class="n cp">9.00</td></tr>
+                        <tr><td>输出</td><td class="n ci">13.50</td><td class="n cp">27.00</td></tr>
+                      </tbody>
+                    </table>
+                    <div class="w-foot">元 / 百万 tokens · 高峰 = 空闲 × 2<div class="bcode"></div></div>
+                  </div>
+                  <div class="sb-set"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>设置</div>
+                </div>
+              </div>
+            </div>
+            <div class="stage">
+              <span class="stage-tag">收起 · 图标栏</span>
+              <div class="stage-frame coll ctx-3">
+                <div class="rail">
+                  <div class="w-c st-c-3" data-od-id="style-3-collapsed"><i class="dot"></i><span class="lbl"><span class="lpk">峰</span><span class="lidle">闲</span></span></div>
+                  <div class="rail-set"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- 04 时刻线 -->
+        <article class="spec" data-od-id="style-4">
+          <div class="spec-top">
+            <span class="spec-idx">04</span>
+            <div class="spec-titles">
+              <h3>时刻线 Metro</h3>
+              <span class="en">ROUTE MAP · 24H LINE · TRAIN</span>
+            </div>
+            <div class="spec-tags"><span class="spec-tag">浅色</span><span class="spec-tag">地铁</span><span class="spec-tag">24h</span></div>
+          </div>
+          <p class="spec-desc">把一整天画成一条地铁线路：高峰是橙色区间，站点点出 09/12/14/18 时刻，当前位置是一列「列车」。</p>
+          <div class="spec-stages">
+            <div class="stage">
+              <span class="stage-tag">展开 · 侧边栏</span>
+              <div class="stage-frame exp ctx-4">
+                <div class="sb">
+                  <div class="w st-4" data-od-id="style-4-widget">
+                    <div class="w-head">
+                      <span class="w-name">DeepSeek 计费</span>
+                      <span class="w-badge"><i class="dot"></i><span class="lpk">高峰</span><span class="lidle">空闲</span></span>
+                    </div>
+                    <div class="line">
+                      <i class="sta" style="left:0%"></i><i class="sta" style="left:37.5%"></i><i class="sta" style="left:50%"></i><i class="sta" style="left:58.34%"></i><i class="sta" style="left:75%"></i><i class="sta" style="left:100%"></i>
+                      <span class="train"></span>
+                    </div>
+                    <div class="line-times"><span>00</span><span>09</span><span>12</span><span>14</span><span>18</span><span>24</span></div>
+                    <div class="legend"><span><i class="lg-pk"></i>高峰</span><span><i class="lg-id"></i>空闲</span></div>
+                    <button class="w-toggle" type="button" aria-expanded="true"><span>价格表</span><svg class="t-chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg></button>
+                    <table class="wt">
+                      <thead><tr><th>计费项</th><th>空闲<i class="hx hi"></i></th><th>高峰<i class="hx hp"></i></th></tr></thead>
+                      <tbody>
+                        <tr class="wtm"><td colspan="3">V4-Flash</td></tr>
+                        <tr><td>输入 · 缓存命中</td><td class="n ci">0.05</td><td class="n cp">0.10</td></tr>
+                        <tr><td>输入 · 缓存未命中</td><td class="n ci">1.50</td><td class="n cp">3.00</td></tr>
+                        <tr><td>输出</td><td class="n ci">4.50</td><td class="n cp">9.00</td></tr>
+                        <tr class="wtm"><td colspan="3">V4-Pro</td></tr>
+                        <tr><td>输入 · 缓存命中</td><td class="n ci">0.15</td><td class="n cp">0.30</td></tr>
+                        <tr><td>输入 · 缓存未命中</td><td class="n ci">4.50</td><td class="n cp">9.00</td></tr>
+                        <tr><td>输出</td><td class="n ci">13.50</td><td class="n cp">27.00</td></tr>
+                      </tbody>
+                    </table>
+                    <div class="w-foot">元 / 百万 tokens · 北京时间</div>
+                  </div>
+                  <div class="sb-set"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>设置</div>
+                </div>
+              </div>
+            </div>
+            <div class="stage">
+              <span class="stage-tag">收起 · 图标栏</span>
+              <div class="stage-frame coll ctx-4">
+                <div class="rail">
+                  <div class="w-c st-c-4" data-od-id="style-4-collapsed"><span class="mini"><span class="train"></span></span><span class="lbl"><span class="lpk">峰</span><span class="lidle">闲</span></span></div>
+                  <div class="rail-set"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- 05 胶囊 -->
+        <article class="spec" data-od-id="style-5">
+          <div class="spec-top">
+            <span class="spec-idx">05</span>
+            <div class="spec-titles">
+              <h3>胶囊 Pills</h3>
+              <span class="en">SOFT · ROUNDED · FRIENDLY</span>
+            </div>
+            <div class="spec-tags"><span class="spec-tag">浅色</span><span class="spec-tag">圆润</span><span class="spec-tag">亲和</span></div>
+          </div>
+          <p class="spec-desc">大圆角 + 柔和马卡龙色块：价格是彩色小胶囊，时段是圆点徽章，整体亲和轻松。</p>
+          <div class="spec-stages">
+            <div class="stage">
+              <span class="stage-tag">展开 · 侧边栏</span>
+              <div class="stage-frame exp ctx-5">
+                <div class="sb">
+                  <div class="w st-5" data-od-id="style-5-widget">
+                    <div class="w-head">
+                      <span class="w-name">DeepSeek 计费</span>
+                      <span class="w-badge"><i class="dot"></i><span class="lpk">高峰</span><span class="lidle">空闲</span></span>
+                    </div>
+                    <div class="w-tl">
+                      <div class="tl-bar"><div class="tl-track"><i class="s-idle" style="width:37.5%"></i><i class="s-peak" style="width:12.5%"></i><i class="s-idle" style="width:8.34%"></i><i class="s-peak" style="width:16.66%"></i><i class="s-idle" style="width:25%"></i></div><span class="tl-cur"></span></div>
+                      <div class="tl-meta">高峰 09:00–12:00 · 14:00–18:00｜其余空闲</div>
+                    </div>
+                    <button class="w-toggle" type="button" aria-expanded="true"><span>价格表</span><svg class="t-chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg></button>
+                    <table class="wt">
+                      <thead><tr><th>计费项</th><th>空闲<i class="hx hi"></i></th><th>高峰<i class="hx hp"></i></th></tr></thead>
+                      <tbody>
+                        <tr class="wtm"><td colspan="3">V4-Flash</td></tr>
+                        <tr><td>输入 · 缓存命中</td><td class="n ci">0.05</td><td class="n cp">0.10</td></tr>
+                        <tr><td>输入 · 缓存未命中</td><td class="n ci">1.50</td><td class="n cp">3.00</td></tr>
+                        <tr><td>输出</td><td class="n ci">4.50</td><td class="n cp">9.00</td></tr>
+                        <tr class="wtm"><td colspan="3">V4-Pro</td></tr>
+                        <tr><td>输入 · 缓存命中</td><td class="n ci">0.15</td><td class="n cp">0.30</td></tr>
+                        <tr><td>输入 · 缓存未命中</td><td class="n ci">4.50</td><td class="n cp">9.00</td></tr>
+                        <tr><td>输出</td><td class="n ci">13.50</td><td class="n cp">27.00</td></tr>
+                      </tbody>
+                    </table>
+                    <div class="w-foot">元 / 百万 tokens · 北京时间</div>
+                  </div>
+                  <div class="sb-set"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>设置</div>
+                </div>
+              </div>
+            </div>
+            <div class="stage">
+              <span class="stage-tag">收起 · 图标栏</span>
+              <div class="stage-frame coll ctx-5">
+                <div class="rail">
+                  <div class="w-c st-c-5" data-od-id="style-5-collapsed"><i class="dot"></i><span class="lpk">高峰</span><span class="lidle">空闲</span></div>
+                  <div class="rail-set"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- 06 终端 -->
+        <article class="spec" data-od-id="style-6">
+          <div class="spec-top">
+            <span class="spec-idx">06</span>
+            <div class="spec-titles">
+              <h3>终端 Terminal</h3>
+              <span class="en">CLI · LOG LINES · MONO</span>
+            </div>
+            <div class="spec-tags"><span class="spec-tag">深色</span><span class="spec-tag">CLI</span><span class="spec-tag">日志</span></div>
+          </div>
+          <p class="spec-desc">像一条终端输出：`$ ds rate --now` 查询、日志式颜色状态行、等宽价格对齐，开发者味十足。</p>
+          <div class="spec-stages">
+            <div class="stage">
+              <span class="stage-tag">展开 · 侧边栏</span>
+              <div class="stage-frame exp ctx-6">
+                <div class="sb">
+                  <div class="w st-6" data-od-id="style-6-widget">
+                    <div class="term-bar"><i class="tdot"></i><i class="tdot"></i><i class="tdot"></i><span class="tname">deepseek-rate · v4</span></div>
+                    <div class="term-body">
+                      <div class="tline"><span class="ps">$</span><span class="txt">ds rate --now</span></div>
+                      <div class="tline"><span class="ps">▸</span><span class="nowv"><span class="lpk">当前：高峰</span><span class="lidle">当前：空闲</span></span></div>
+                      <div class="tline"><span class="dim">09:00–12:00 · 14:00–18:00</span></div>
+                      <button class="w-toggle" type="button" aria-expanded="true"><span>价格表</span><svg class="t-chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg></button>
+                      <div class="ttbl">
+                        <div class="tt-head"><span>flash</span><span>idle</span><span>peak</span></div>
+                        <div class="tt-row"><span class="m">输入 · 缓存命中</span><span class="p"><span class="n idle">0.05</span><span class="n peak">0.10</span></span></div>
+                        <div class="tt-row"><span class="m">输入 · 未命中</span><span class="p"><span class="n idle">1.50</span><span class="n peak">3.00</span></span></div>
+                        <div class="tt-row"><span class="m">输出</span><span class="p"><span class="n idle">4.50</span><span class="n peak">9.00</span></span></div>
+                        <div class="tt-head" style="margin-top:4px;"><span>pro</span><span>idle</span><span>peak</span></div>
+                        <div class="tt-row"><span class="m">输入 · 缓存命中</span><span class="p"><span class="n idle">0.15</span><span class="n peak">0.30</span></span></div>
+                        <div class="tt-row"><span class="m">输入 · 未命中</span><span class="p"><span class="n idle">4.50</span><span class="n peak">9.00</span></span></div>
+                        <div class="tt-row"><span class="m">输出</span><span class="p"><span class="n idle">13.50</span><span class="n peak">27.00</span></span></div>
+                      </div>
+                    </div>
+                    <div class="term-foot">元 / 百万 tokens · 北京时间</div>
+                  </div>
+                  <div class="sb-set"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>设置</div>
+                </div>
+              </div>
+            </div>
+            <div class="stage">
+              <span class="stage-tag">收起 · 图标栏</span>
+              <div class="stage-frame coll ctx-6">
+                <div class="rail">
+                  <div class="w-c st-c-6" data-od-id="style-6-collapsed"><span class="caret">▍</span><span class="lbl"><span class="lpk">峰</span><span class="lidle">闲</span></span></div>
+                  <div class="rail-set"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- 07 粗野 -->
+        <article class="spec" data-od-id="style-7">
+          <div class="spec-top">
+            <span class="spec-idx">07</span>
+            <div class="spec-titles">
+              <h3>粗野 Brutalist</h3>
+              <span class="en">HARD EDGE · BLOCKY · BOLD</span>
+            </div>
+            <div class="spec-tags"><span class="spec-tag">浅色</span><span class="spec-tag">硬边</span><span class="spec-tag">高对比</span></div>
+          </div>
+          <p class="spec-desc">2px 黑边 + 硬投影 + 反色块：当前时段是一个纯色黑块，当前价格列整列反白，醒目直接。</p>
+          <div class="spec-stages">
+            <div class="stage">
+              <span class="stage-tag">展开 · 侧边栏</span>
+              <div class="stage-frame exp ctx-7">
+                <div class="sb">
+                  <div class="w st-7" data-od-id="style-7-widget">
+                    <div class="w-head">
+                      <span class="w-name">DeepSeek 计费</span>
+                      <span class="w-badge"><span class="lpk">高峰</span><span class="lidle">空闲</span></span>
+                    </div>
+                    <div class="w-tl">
+                      <div class="tl-bar"><div class="tl-track"><i class="s-idle" style="width:37.5%"></i><i class="s-peak" style="width:12.5%"></i><i class="s-idle" style="width:8.34%"></i><i class="s-peak" style="width:16.66%"></i><i class="s-idle" style="width:25%"></i></div><span class="tl-cur"></span></div>
+                      <div class="tl-meta">高峰 09:00–12:00 · 14:00–18:00｜其余空闲</div>
+                    </div>
+                    <button class="w-toggle" type="button" aria-expanded="true"><span>价格表</span><svg class="t-chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg></button>
+                    <table class="wt">
+                      <thead><tr><th>计费项</th><th>空闲<i class="hx hi"></i></th><th>高峰<i class="hx hp"></i></th></tr></thead>
+                      <tbody>
+                        <tr class="wtm"><td colspan="3">V4-FLASH</td></tr>
+                        <tr><td>输入 · 缓存命中</td><td class="n ci">0.05</td><td class="n cp">0.10</td></tr>
+                        <tr><td>输入 · 缓存未命中</td><td class="n ci">1.50</td><td class="n cp">3.00</td></tr>
+                        <tr><td>输出</td><td class="n ci">4.50</td><td class="n cp">9.00</td></tr>
+                        <tr class="wtm"><td colspan="3">V4-PRO</td></tr>
+                        <tr><td>输入 · 缓存命中</td><td class="n ci">0.15</td><td class="n cp">0.30</td></tr>
+                        <tr><td>输入 · 缓存未命中</td><td class="n ci">4.50</td><td class="n cp">9.00</td></tr>
+                        <tr><td>输出</td><td class="n ci">13.50</td><td class="n cp">27.00</td></tr>
+                      </tbody>
+                    </table>
+                    <div class="w-foot">元 / 百万 tokens · 北京时间</div>
+                  </div>
+                  <div class="sb-set"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>设置</div>
+                </div>
+              </div>
+            </div>
+            <div class="stage">
+              <span class="stage-tag">收起 · 图标栏</span>
+              <div class="stage-frame coll ctx-7">
+                <div class="rail">
+                  <div class="w-c st-c-7" data-od-id="style-7-collapsed"><span class="box"><span class="lpk">峰</span><span class="lidle">闲</span></span></div>
+                  <div class="rail-set"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- 08 玻璃 -->
+        <article class="spec" data-od-id="style-8">
+          <div class="spec-top">
+            <span class="spec-idx">08</span>
+            <div class="spec-titles">
+              <h3>玻璃 Glass</h3>
+              <span class="en">FROSTED · TRANSLUCENT · GLOW</span>
+            </div>
+            <div class="spec-tags"><span class="spec-tag">深色</span><span class="spec-tag">毛玻璃</span><span class="spec-tag">通透</span></div>
+          </div>
+          <p class="spec-desc">半透明毛玻璃浮层悬浮在渐变底色上，时段色以光晕呈现，通透而现代。</p>
+          <div class="spec-stages">
+            <div class="stage">
+              <span class="stage-tag">展开 · 侧边栏</span>
+              <div class="stage-frame exp ctx-8">
+                <i class="blob b1"></i><i class="blob b2"></i>
+                <div class="sb">
+                  <div class="w st-8" data-od-id="style-8-widget">
+                    <div class="w-head">
+                      <span class="w-name">DeepSeek 计费</span>
+                      <span class="w-badge"><i class="dot"></i><span class="lpk">高峰</span><span class="lidle">空闲</span></span>
+                    </div>
+                    <div class="w-tl">
+                      <div class="tl-bar"><div class="tl-track"><i class="s-idle" style="width:37.5%"></i><i class="s-peak" style="width:12.5%"></i><i class="s-idle" style="width:8.34%"></i><i class="s-peak" style="width:16.66%"></i><i class="s-idle" style="width:25%"></i></div><span class="tl-cur"></span></div>
+                      <div class="tl-meta">高峰 09:00–12:00 · 14:00–18:00｜其余空闲</div>
+                    </div>
+                    <button class="w-toggle" type="button" aria-expanded="true"><span>价格表</span><svg class="t-chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg></button>
+                    <table class="wt">
+                      <thead><tr><th>计费项</th><th>空闲<i class="hx hi"></i></th><th>高峰<i class="hx hp"></i></th></tr></thead>
+                      <tbody>
+                        <tr class="wtm"><td colspan="3">V4-Flash</td></tr>
+                        <tr><td>输入 · 缓存命中</td><td class="n ci">0.05</td><td class="n cp">0.10</td></tr>
+                        <tr><td>输入 · 缓存未命中</td><td class="n ci">1.50</td><td class="n cp">3.00</td></tr>
+                        <tr><td>输出</td><td class="n ci">4.50</td><td class="n cp">9.00</td></tr>
+                        <tr class="wtm"><td colspan="3">V4-Pro</td></tr>
+                        <tr><td>输入 · 缓存命中</td><td class="n ci">0.15</td><td class="n cp">0.30</td></tr>
+                        <tr><td>输入 · 缓存未命中</td><td class="n ci">4.50</td><td class="n cp">9.00</td></tr>
+                        <tr><td>输出</td><td class="n ci">13.50</td><td class="n cp">27.00</td></tr>
+                      </tbody>
+                    </table>
+                    <div class="w-foot">元 / 百万 tokens · 北京时间</div>
+                  </div>
+                  <div class="sb-set"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>设置</div>
+                </div>
+              </div>
+            </div>
+            <div class="stage">
+              <span class="stage-tag">收起 · 图标栏</span>
+              <div class="stage-frame coll ctx-8">
+                <i class="blob b1"></i><i class="blob b2"></i>
+                <div class="rail">
+                  <div class="w-c st-c-8" data-od-id="style-8-collapsed"><i class="dot"></i><span class="lbl"><span class="lpk">峰</span><span class="lidle">闲</span></span></div>
+                  <div class="rail-set"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- 09 昼夜 -->
+        <article class="spec" data-od-id="style-9">
+          <div class="spec-top">
+            <span class="spec-idx">09</span>
+            <div class="spec-titles">
+              <h3>昼夜 DayNight</h3>
+              <span class="en">SUN / MOON · TIME-OF-DAY</span>
+            </div>
+            <div class="spec-tags"><span class="spec-tag">明暗</span><span class="spec-tag">太阳月亮</span><span class="spec-tag">直观</span></div>
+          </div>
+          <p class="spec-desc">整张卡片随时间变色：高峰是白昼、空闲是夜空，太阳 / 月亮图标直接告诉你「现在是什么时段」。</p>
+          <div class="spec-stages">
+            <div class="stage">
+              <span class="stage-tag">展开 · 侧边栏</span>
+              <div class="stage-frame exp ctx-9">
+                <div class="sb">
+                  <div class="w st-9" data-od-id="style-9-widget">
+                    <div class="w-head">
+                      <span class="sky">
+                        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M19.4 4.6l-1.8 1.8M6.4 17.6l-1.8 1.8"/></svg>
+                        <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+                      </span>
+                      <span class="w-now"><span class="lpk">高峰时段</span><span class="lidle">空闲时段</span></span>
+                    </div>
+                    <div class="w-sub">北京时间 · 高峰 09:00–12:00 / 14:00–18:00</div>
+                    <div class="w-tl">
+                      <div class="tl-bar"><div class="tl-track"><i class="s-idle" style="width:37.5%"></i><i class="s-peak" style="width:12.5%"></i><i class="s-idle" style="width:8.34%"></i><i class="s-peak" style="width:16.66%"></i><i class="s-idle" style="width:25%"></i></div><span class="tl-cur"></span></div>
+                      <div class="tl-meta">暖色段 = 高峰　冷色段 = 空闲</div>
+                    </div>
+                    <button class="w-toggle" type="button" aria-expanded="true"><span>价格表</span><svg class="t-chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg></button>
+                    <table class="wt">
+                      <thead><tr><th>计费项</th><th>空闲<i class="hx hi"></i></th><th>高峰<i class="hx hp"></i></th></tr></thead>
+                      <tbody>
+                        <tr class="wtm"><td colspan="3">V4-Flash</td></tr>
+                        <tr><td>输入 · 缓存命中</td><td class="n ci">0.05</td><td class="n cp">0.10</td></tr>
+                        <tr><td>输入 · 缓存未命中</td><td class="n ci">1.50</td><td class="n cp">3.00</td></tr>
+                        <tr><td>输出</td><td class="n ci">4.50</td><td class="n cp">9.00</td></tr>
+                        <tr class="wtm"><td colspan="3">V4-Pro</td></tr>
+                        <tr><td>输入 · 缓存命中</td><td class="n ci">0.15</td><td class="n cp">0.30</td></tr>
+                        <tr><td>输入 · 缓存未命中</td><td class="n ci">4.50</td><td class="n cp">9.00</td></tr>
+                        <tr><td>输出</td><td class="n ci">13.50</td><td class="n cp">27.00</td></tr>
+                      </tbody>
+                    </table>
+                    <div class="w-foot">元 / 百万 tokens · 高峰 = 空闲 × 2</div>
+                  </div>
+                  <div class="sb-set"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>设置</div>
+                </div>
+              </div>
+            </div>
+            <div class="stage">
+              <span class="stage-tag">收起 · 图标栏</span>
+              <div class="stage-frame coll ctx-9">
+                <div class="rail">
+                  <div class="w-c st-c-9" data-od-id="style-9-collapsed">
+                    <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M19.4 4.6l-1.8 1.8M6.4 17.6l-1.8 1.8"/></svg>
+                    <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+                    <span class="lbl"><span class="lpk">峰</span><span class="lidle">闲</span></span>
+                  </div>
+                  <div class="rail-set"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- 10 编辑 -->
+        <article class="spec" data-od-id="style-10">
+          <div class="spec-top">
+            <span class="spec-idx">10</span>
+            <div class="spec-titles">
+              <h3>编辑 Editorial</h3>
+              <span class="en">SERIF · HAIRLINE · MAGAZINE</span>
+            </div>
+            <div class="spec-tags"><span class="spec-tag">浅色</span><span class="spec-tag">衬线</span><span class="spec-tag">杂志</span></div>
+          </div>
+          <p class="spec-desc">杂志编辑风：衬线标题 + 等宽数字 + 细分割线，报价像一份精致的期刊专栏，优雅克制。</p>
+          <div class="spec-stages">
+            <div class="stage">
+              <span class="stage-tag">展开 · 侧边栏</span>
+              <div class="stage-frame exp ctx-10">
+                <div class="sb">
+                  <div class="w st-10" data-od-id="style-10-widget">
+                    <div class="w-head">
+                      <div>
+                        <div class="w-eyebrow">DeepSeek · 报价</div>
+                        <div class="w-name">分时段计费</div>
+                      </div>
+                      <span class="w-badge"><i class="dot"></i><span class="lpk">高峰</span><span class="lidle">空闲</span></span>
+                    </div>
+                    <div class="w-tl">
+                      <div class="tl-bar"><div class="tl-track"><i class="s-idle" style="width:37.5%"></i><i class="s-peak" style="width:12.5%"></i><i class="s-idle" style="width:8.34%"></i><i class="s-peak" style="width:16.66%"></i><i class="s-idle" style="width:25%"></i></div><span class="tl-cur"></span></div>
+                      <div class="tl-meta">09:00–12:00 · 14:00–18:00 高峰（北京时间）</div>
+                    </div>
+                    <button class="w-toggle" type="button" aria-expanded="true"><span>价格表</span><svg class="t-chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg></button>
+                    <table class="wt">
+                      <thead><tr><th>计费项</th><th>空闲<i class="hx hi"></i></th><th>高峰<i class="hx hp"></i></th></tr></thead>
+                      <tbody>
+                        <tr class="wtm"><td colspan="3">V4-Flash</td></tr>
+                        <tr><td>输入 · 缓存命中</td><td class="n ci">0.05</td><td class="n cp">0.10</td></tr>
+                        <tr><td>输入 · 缓存未命中</td><td class="n ci">1.50</td><td class="n cp">3.00</td></tr>
+                        <tr><td>输出</td><td class="n ci">4.50</td><td class="n cp">9.00</td></tr>
+                        <tr class="wtm"><td colspan="3">V4-Pro</td></tr>
+                        <tr><td>输入 · 缓存命中</td><td class="n ci">0.15</td><td class="n cp">0.30</td></tr>
+                        <tr><td>输入 · 缓存未命中</td><td class="n ci">4.50</td><td class="n cp">9.00</td></tr>
+                        <tr><td>输出</td><td class="n ci">13.50</td><td class="n cp">27.00</td></tr>
+                      </tbody>
+                    </table>
+                    <div class="w-foot">元 / 百万 tokens · 高峰 = 空闲 × 2</div>
+                  </div>
+                  <div class="sb-set"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>设置</div>
+                </div>
+              </div>
+            </div>
+            <div class="stage">
+              <span class="stage-tag">收起 · 图标栏</span>
+              <div class="stage-frame coll ctx-10">
+                <div class="rail">
+                  <div class="w-c st-c-10" data-od-id="style-10-collapsed"><span class="mark"><span class="lpk">峰</span><span class="lidle">闲</span></span><span class="lbl">NOW</span></div>
+                  <div class="rail-set"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer" data-od-id="footer">
+  <div class="container">
+    <p class="f-title">选中一款？告诉我编号，我帮你落地成 Harness 侧边栏插件组件。</p>
+    <p class="f-note">价格基于 IT之家公开的 DeepSeek V4 分时段报价（元 / 百万 tokens），仅用于界面演示，正式接入请以官方实时接口为准。全系列统一语义：高峰 = 暖色（橙 / 琥珀 / 红），空闲 = 冷色（蓝 / 青 / 绿）。演示默认停留在高峰时段；接入后组件应按当前北京时间自动判定时段。</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var body = document.body;
+  var btns = document.querySelectorAll('[data-set-period]');
+  function apply(p) {
+    body.dataset.period = p;
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].setAttribute('aria-pressed', String(btns[i].dataset.setPeriod === p));
+    }
+  }
+  for (var i = 0; i < btns.length; i++) {
+    btns[i].addEventListener('click', function () { apply(this.dataset.setPeriod); });
+  }
+  var toggles = document.querySelectorAll('.w-toggle');
+  for (var j = 0; j < toggles.length; j++) {
+    toggles[j].addEventListener('click', function () {
+      var w = this.closest('.w');
+      if (!w) return;
+      var collapsed = w.classList.toggle('is-collapsed');
+      this.setAttribute('aria-expanded', String(!collapsed));
+    });
+  }
+})();
+</script>
+</body>
+</html>

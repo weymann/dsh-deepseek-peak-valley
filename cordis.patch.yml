@@ -1,0 +1,19 @@
+# dsh-deepseek-peak-valley bundle patch
+#
+# This file is the `dsh.bundle.patch` layer of the package: when the plugin is
+# installed through the official CLI —
+#
+#   dsh plugin --profile <name> add dsh-deepseek-peak-valley
+#
+# — the command reconciles `dsh.profile.bundles` against installed packages
+# and, seeing this declaration, appends `dsh-deepseek-peak-valley` to the
+# bundle stack. The profile boot then merges THIS patch (a single `insert` of
+# the plugin row) exactly like a manual cordis.patch.yml mount line.
+#
+# The row uses a stable `id` (configuration-tree line identity), a `name` the
+# host Loader resolves as a package, and an empty `config` (the plugin takes
+# no host configuration; all behavior lives in the browser half).
+- insert:
+    - id: dsh-deepseek-peak-valley
+      name: 'dsh-deepseek-peak-valley'
+      config: {}
