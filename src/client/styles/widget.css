@@ -545,6 +545,231 @@
 .ds-collapsed-10 .mark { font-family: 'Iowan Old Style', 'Charter', Georgia, 'Songti SC', serif; font-size: 15px; font-weight: 600; color: var(--now); }
 .ds-collapsed-10 .lbl { font-family: ui-monospace, 'JetBrains Mono', 'IBM Plex Mono', 'SF Mono', Menlo, monospace; font-size: 8.5px; letter-spacing: 0.1em; color: var(--now); }
 
+/* ═══════ Style 11 · 无人岛 Animal Island · 双视图 ═══════ */
+.ds-style-11, .ds-collapsed-11 {
+  --ac-outline: #6b4d33;
+  --ac-outline-soft: #c9b083;
+  --ac-ink: #6b4d33;
+  --ac-ink-2: #8a6a45;
+  --ac-cream: #fff6df;
+  --ac-cream-2: #fdf3d9;
+  --ac-paper: #fffaf0;
+  --ac-edge: rgba(107, 77, 51, 0.28);
+  --ac-shadow: rgba(107, 77, 51, 0.18);
+  --ac-orange: #e59266;
+  --ac-orange-deep: oklch(40% 0.11 45);
+  --ac-idle: #82d5bb;
+  --ac-idle-deep: oklch(32% 0.07 190);
+  --ac-red: #e05a5a;
+  --ac-green: #6fba2c;
+  --ac-yellow: #f7cd67;
+  --ac-blue: #889df0;
+  --ac-pink: #f8a6b2;
+  --ac-mint: #19c8b9;
+  --ai-mint-pale: color-mix(in oklch, var(--ac-mint) 18%, oklch(100% 0 0));
+  --ai-blue-pale: color-mix(in oklch, var(--ac-blue) 16%, oklch(100% 0 0));
+  --ai-yellow-pale: color-mix(in oklch, var(--ac-yellow) 22%, oklch(100% 0 0));
+  --ai-teal-ink: oklch(33% 0.07 190);
+  --ai-blue-ink: oklch(40% 0.13 262);
+  --ai-amber-ink: oklch(44% 0.12 75);
+  --ai-pink-pale: color-mix(in oklch, var(--ac-pink) 20%, oklch(100% 0 0));
+  --ai-pink-ink: oklch(45% 0.12 10);
+  --peak: var(--ac-orange); --peak-deep: var(--ac-orange-deep);
+  --idle: var(--ac-idle); --idle-deep: var(--ac-idle-deep);
+  --now: var(--peak); --now-deep: var(--peak-deep);
+}
+.ds-pv[data-period='idle'] .ds-style-11,
+.ds-pv[data-period='idle'] .ds-collapsed-11 { --now: var(--idle); --now-deep: var(--idle-deep); }
+
+/* ─── 展开态主容器 ────────────────────────────────────────────────── */
+.ds-style-11 {
+  font-family: 'Nunito', ui-rounded, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  background: var(--ac-cream); border: 3px solid var(--ac-outline); border-radius: 24px;
+  padding: 12px; color: var(--ac-ink);
+  box-shadow: 0 5px 0 0 var(--ac-edge), 0 14px 22px var(--ac-shadow);
+}
+
+/* ─── 头部：视图切换按钮 + 时段贴纸 ──────────────────────────────── */
+.ds-style-11 .ai-head {
+  display: flex; justify-content: space-between; align-items: center; gap: 8px;
+}
+
+/* 视图切换按钮 */
+.ds-style-11 .ai-view-switch {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 4px 12px; min-width: 122px; border-radius: 999px;
+  background: var(--ai-mint-pale);
+  border: 2.5px solid var(--ac-outline);
+  color: var(--ac-ink); font-weight: 900; font-size: 12px; letter-spacing: 0.02em;
+  box-shadow: 0 3px 0 0 var(--ac-edge);
+  white-space: nowrap;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.ds-style-11 .ai-view-switch .ai-swap-ico { width: 12px; height: 12px; flex: none; color: var(--ac-green); }
+.ds-style-11 .ai-view-switch .ai-v-usage { display: none; }
+.ds-pv[data-tab='usage'] .ds-style-11 .ai-view-switch .ai-v-pricing { display: none; }
+.ds-pv[data-tab='usage'] .ds-style-11 .ai-view-switch .ai-v-usage { display: inline; }
+.ds-pv[data-tab='usage'] .ds-style-11 .ai-view-switch { background: var(--ai-pink-pale); }
+.ds-pv[data-tab='usage'] .ds-style-11 .ai-view-switch .ai-swap-ico { color: var(--ai-pink-ink); }
+.ds-style-11 .ai-view-switch:hover { transform: translateY(-1px); box-shadow: 0 4px 0 0 var(--ac-edge); }
+.ds-style-11 .ai-view-switch:active { transform: translateY(2px); box-shadow: 0 1px 0 0 var(--ac-edge); }
+
+/* 时段贴纸 */
+.ds-style-11 .ai-sticker {
+  position: relative;
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px; border-radius: 999px;
+  background: var(--ac-paper);
+  border: 2.5px solid var(--now-deep);
+  color: var(--now-deep); font-weight: 900; font-size: 10.5px; letter-spacing: 0.03em;
+  transform: rotate(-2deg);
+  box-shadow: 0 2px 0 0 color-mix(in oklch, var(--now-deep) 45%, transparent);
+}
+.ds-style-11 .ai-sticker .ai-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--now-deep); }
+.ds-style-11 .ai-sticker .ai-x2 {
+  position: absolute;
+  top: -12px; right: -6px;
+  font-style: normal; font-weight: 900; font-size: 12px; line-height: 1;
+  padding: 2px 6px; border-radius: 7px;
+  background: oklch(50% 0.2 27);
+  color: oklch(100% 0 0);
+  box-shadow: 0 2px 0 0 rgba(107, 77, 51, 0.35);
+  transform: rotate(-5deg);
+  z-index: 2;
+}
+.ds-pv[data-period='idle'] .ds-style-11 .ai-lpk { display: none; }
+.ds-pv[data-period='peak'] .ds-style-11 .ai-lidle { display: none; }
+
+/* ─── 内容标签页区域 ─────────────────────────────────────────────── */
+.ds-style-11 .ai-panes { margin-top: 10px; }
+
+/* ─── 价格视图（计费）─────────────────────────────────────────────── */
+.ds-style-11 .ai-tl-bar {
+  position: relative; border-radius: 999px; height: 11px; margin-top: 10px;
+}
+.ds-style-11 .ai-tl-track {
+  position: absolute; inset: 0; border-radius: inherit; overflow: hidden; display: flex;
+  background: var(--ac-cream-2); border: 2.5px solid var(--ac-outline);
+  box-shadow: inset 0 2px 4px rgba(107, 77, 51, 0.2);
+}
+.ds-style-11 .ai-tl-track > i { display: block; }
+.ds-style-11 .ai-tl-track .ai-s-peak {
+  background: linear-gradient(180deg, color-mix(in oklch, var(--ac-orange) 72%, oklch(100% 0 0)), var(--ac-orange));
+}
+.ds-style-11 .ai-tl-track .ai-s-idle {
+  background: linear-gradient(180deg, color-mix(in oklch, var(--ac-idle) 72%, oklch(100% 0 0)), var(--ac-idle));
+}
+.ds-style-11 .ai-tl-cur {
+  position: absolute; left: 43.75%; z-index: 1;
+  top: 50%; width: 12px; height: 12px; border-radius: 50%;
+  background: var(--ac-paper); border: 3px solid var(--now-deep);
+  transform: translate(-50%, -50%);
+  box-shadow: 0 2px 0 0 rgba(107, 77, 51, 0.35);
+  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.ds-style-11 .ai-tl-meta {
+  margin-top: 7px; font-size: 9.5px; font-weight: 900; letter-spacing: 0.02em; color: var(--ac-ink-2);
+}
+
+/* 价格表切换按钮 */
+.ds-style-11 .ai-toggle {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  width: 100%; margin-top: 8px; padding: 5px 12px;
+  border: 2.5px solid var(--ac-outline); background: var(--ai-mint-pale); text-align: left; cursor: pointer;
+  font-weight: 900; font-size: 11px; letter-spacing: 0.02em; color: var(--ac-ink);
+  border-radius: 999px;
+  box-shadow: 0 4px 0 0 var(--ac-edge);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.ds-style-11 .ai-toggle:hover { transform: translateY(-1px); box-shadow: 0 5px 0 0 var(--ac-edge); background: color-mix(in oklch, var(--ai-mint-pale) 88%, var(--ac-green)); }
+.ds-style-11 .ai-toggle:active { transform: translateY(2px); box-shadow: 0 1px 0 0 var(--ac-edge); }
+.ds-style-11 .ai-toggle--usage { background: var(--ai-yellow-pale); }
+.ds-style-11 .ai-toggle--usage:hover { background: color-mix(in oklch, var(--ai-yellow-pale) 88%, var(--ac-yellow)); }
+.ds-style-11 .ai-chev { width: 12px; height: 12px; flex: none; transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+.ds-style-11:not(.is-collapsed) .ai-chev { transform: rotate(90deg); }
+/* 价格表收起的隐藏只作用于价格视图；用量明细的显隐由 usageDetailExpanded 单独控制 */
+.ds-style-11.is-collapsed .ai-price-inner { display: none; }
+.ds-style-11 .ai-detail-inner[hidden] { display: none; }
+
+/* 价格表内嵌面板 */
+.ds-style-11 .ai-inner {
+  background: var(--ac-cream-2); border: 2px dashed var(--ac-outline-soft);
+  border-radius: 16px; padding: 6px 9px; margin-top: 6px;
+}
+.ds-style-11 .ai-price-inner { margin-top: 6px; }
+.ds-style-11 .ai-wt { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.ds-style-11 .ai-wt th, .ds-style-11 .ai-wt td { font-size: 10.5px; line-height: 1.55; padding: 3px 2px; text-align: left; }
+.ds-style-11 .ai-wt td:nth-child(2), .ds-style-11 .ai-wt td:nth-child(3),
+.ds-style-11 .ai-wt th:nth-child(2), .ds-style-11 .ai-wt th:nth-child(3) { width: 46px; text-align: right; }
+.ds-style-11 .ai-n { font-variant-numeric: tabular-nums; }
+.ds-style-11 .ai-hx { display: block; height: 2.5px; margin-top: 2px; border-radius: 3px; opacity: 0; transition: opacity 0.2s ease; }
+.ds-pv[data-period='peak'] .ds-style-11 .ai-hx.ai-hp,
+.ds-pv[data-period='idle'] .ds-style-11 .ai-hx.ai-hi { opacity: 1; background: var(--now-deep); }
+.ds-style-11 .ai-wt .ai-wtm td { color: var(--ac-ink); font-weight: 900; font-size: 10px; letter-spacing: 0.04em; }
+.ds-style-11 .ai-wt .ai-wtm .ai-model-leaf { width: 9px; height: 9px; display: inline-block; vertical-align: -1px; margin-right: 4px; color: var(--ac-green); }
+.ds-style-11 .ai-wt tr + tr td, .ds-style-11 .ai-wt thead th { border-top: 2px dashed var(--ac-outline-soft); }
+.ds-style-11 .ai-n.ai-ci { color: var(--idle-deep); font-weight: 900; }
+.ds-style-11 .ai-n.ai-cp { color: var(--peak-deep); font-weight: 900; }
+.ds-style-11 .ai-wt th { color: var(--ac-ink-2); font-weight: 900; font-size: 9px; letter-spacing: 0.08em; }
+
+/* 页脚 */
+.ds-style-11 .ai-foot {
+  margin-top: 8px; padding-top: 6px;
+  font-size: 9.5px; font-weight: 900; color: var(--ac-ink-2);
+  display: flex; align-items: center; gap: 6px;
+}
+.ds-style-11 .ai-foot-leaf { width: 11px; height: 11px; color: var(--ac-green); flex: none; }
+
+/* ─── 用量视图 ───────────────────────────────────────────────────── */
+.ds-style-11 .ai-usage-sub { margin-top: 2px; font-size: 9.5px; font-weight: 800; color: var(--ac-ink-2); }
+.ds-style-11 .ai-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+.ds-style-11 .ai-tile {
+  border-radius: 30%; padding: 9px 4px 8px; text-align: center;
+  border: 3px solid oklch(100% 0 0);
+  box-shadow: 0 0 0 2.5px var(--ac-outline), 0 4px 0 0 var(--ac-edge);
+}
+.ds-style-11 .ai-tile:nth-child(1) { transform: rotate(-2deg); }
+.ds-style-11 .ai-tile:nth-child(2) { transform: rotate(1.5deg) translateY(1px); }
+.ds-style-11 .ai-tile:nth-child(3) { transform: rotate(-1deg); }
+.ds-style-11 .ai-tile-k { display: block; font-size: 8.5px; font-weight: 900; letter-spacing: 0.06em; }
+.ds-style-11 .ai-tile-v { display: block; font-size: 16px; font-weight: 900; line-height: 1.3; }
+.ds-style-11 .ai-tile-u { display: block; font-size: 8px; font-weight: 900; opacity: 0.85; }
+.ds-style-11 .ai-tile--in { background: var(--ai-mint-pale); color: var(--ai-teal-ink); }
+.ds-style-11 .ai-tile--out { background: var(--ai-blue-pale); color: var(--ai-blue-ink); }
+.ds-style-11 .ai-tile--rate { background: var(--ai-green-pale, color-mix(in oklch, var(--ac-green) 18%, oklch(100% 0 0))); color: var(--ai-teal-ink); }
+.ds-style-11 .ai-detail-inner { margin-top: 6px; }
+.ds-style-11 .ai-d-row { display: flex; justify-content: space-between; align-items: baseline; font-size: 10px; padding: 3px 2px; }
+.ds-style-11 .ai-d-row + .ai-d-row { border-top: 2px dashed var(--ac-outline-soft); }
+.ds-style-11 .ai-d-n { font-weight: 900; }
+
+/* ─── 动画面板切换 ───────────────────────────────────────────────── */
+.ds-style-11 .ds-pane { animation: ai-pane-in 0.28s cubic-bezier(0.4, 0, 0.2, 1); }
+@keyframes ai-pane-in { from { opacity: 0; transform: translateY(6px) scale(0.985); } to { opacity: 1; transform: none; } }
+
+/* ─── 收起态 ─────────────────────────────────────────────────────── */
+.ds-collapsed-11 {
+  width: 42px; height: 54px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--ac-cream); border: 2.5px solid var(--ac-outline); border-radius: 16px;
+  box-shadow: 0 4px 0 0 var(--ac-edge), 0 10px 16px var(--ac-shadow);
+}
+
+/* 计费视图收起：叶子 + 峰/闲 */
+.ds-collapsed-11 .ai-coll-pricing { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.ds-collapsed-11 .ai-coll-leaf { width: 14px; height: 14px; }
+.ds-collapsed-11 .ai-coll-leaf--peak { color: var(--ac-red); animation: ai-leaf-pulse 2.4s ease-in-out infinite; }
+.ds-collapsed-11 .ai-coll-leaf--idle { color: var(--ac-green); }
+.ds-collapsed-11 .ai-coll-lbl { font-weight: 900; font-size: 11px; }
+
+/* 用量视图收起：金币 + 费用 */
+.ds-collapsed-11 .ai-coll-usage { display: none; flex-direction: column; align-items: center; gap: 3px; }
+.ds-pv[data-tab='usage'] .ds-collapsed-11 .ai-coll-pricing { display: none; }
+.ds-pv[data-tab='usage'] .ds-collapsed-11 .ai-coll-usage { display: flex; }
+.ds-collapsed-11 .ai-coll-coin { width: 18px; height: 18px; }
+.ds-collapsed-11 .ai-coll-cost { font-weight: 900; font-size: 12px; letter-spacing: 0.01em; }
+
+@keyframes ai-leaf-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
 /* ─── 无障碍：reduced motion 关闭全部动画/过渡 ─────────────────── */
 @media (prefers-reduced-motion: reduce) {
   .ds-pv *, .ds-pv *::before, .ds-pv *::after { animation: none !important; transition: none !important; }

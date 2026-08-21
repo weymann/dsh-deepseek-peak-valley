@@ -17,10 +17,11 @@ import { SettingsSection } from './components/SettingsSection'
 import { PeakValleyWidget } from './components/Widget'
 import { resetDualStateBuckets } from './state/dual-state'
 import { startPeriodTimer } from './state/period'
+import { startUsageBridge } from './state/usage'
 import { installStyles } from './styles/inject'
 
-/** 必需服务：slot 注册表（其余依赖都经 slots 进入）。 */
-export const inject = ['slots']
+/** 必需服务：slot 注册表 + sessions（当前会话用量桥接读取 token-meter 投影）。 */
+export const inject = ['slots', 'sessions']
 
 /**
  * Client 插件体：侧边栏小组件 + 设置入口。
@@ -32,6 +33,9 @@ export function apply(ctx: ClientContext): void {
 
   // 时段自动判定定时器随 fiber dispose 停止
   ctx.effect(() => startPeriodTimer(), 'dsh-deepseek-peak-valley: period timer')
+
+  // 真实用量桥接（token-meter 投影 → 本插件 store）随 fiber dispose 解除
+  ctx.effect(() => startUsageBridge(ctx), 'dsh-deepseek-peak-valley: usage bridge')
 
   // per-session 双态分桶在 fiber dispose 时清空
   ctx.effect(

@@ -7,6 +7,7 @@
  *   驱动全部风格的语义配色。
  * - 价格表展开/收起（DualState）按 SessionId 分桶记忆（003 用例 7 隔离）。
  * - 关闭时（设置里启停开关）返回 null。
+ * - 双视图风格（Animal Island）额外注入 viewTab / usageDetail 状态。
  */
 import type { PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots';
 /** `sidebar.footer.action` 全量 props：owner 共享 `{ wide }` + 全局标准套件。 */

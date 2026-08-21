@@ -11,7 +11,7 @@
  * 所有 @deepseek-ai/* 导入均为类型导入（编译期擦除）或模块表平台行。
  */
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client';
-/** 必需服务：slot 注册表（其余依赖都经 slots 进入）。 */
+/** 必需服务：slot 注册表 + sessions（当前会话用量桥接读取 token-meter 投影）。 */
 export declare const inject: string[];
 /**
  * Client 插件体：侧边栏小组件 + 设置入口。

@@ -6,3 +6,6 @@ node_modules/
 # 文档驱动工作流内部产物（不入公开仓库）
 AGENTS.md
 docs/
+
+# 本地 skill 工作目录（不入公开仓库）
+.dsh/

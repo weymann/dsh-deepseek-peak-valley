@@ -22,6 +22,27 @@ export type ModelName = 'V4-Flash' | 'V4-Pro'
 /** 计费项。 */
 export type BillingItem = '输入·缓存命中' | '输入·缓存未命中' | '输出'
 
+/** 双视图标签页（Animal Island 等双视图风格使用）。 */
+export type ViewTab = 'pricing' | 'usage'
+
+/** 会话用量快照（演示数据，正式接入以真实 API 为准）。 */
+export interface UsageSnapshot {
+  /** 输入 tokens 总数。 */
+  inputTokens: number
+  /** 输出 tokens 总数。 */
+  outputTokens: number
+  /** 输入 · 缓存命中 tokens。 */
+  cacheHit: number
+  /** 输入 · 缓存未命中 tokens。 */
+  cacheMiss: number
+  /** 缓存命中率（0–100，缓存命中 / 总输入）。 */
+  cacheHitRate: number
+  /** 预估费用（元，两模型合计 · 当前时段）。 */
+  estimatedCost: number
+  /** 分模型 · 分时段预估费用（元）。 */
+  costs: Record<ModelName, { idle: number; peak: number }>
+}
+
 /** 价格单位：元 / 百万 tokens。 */
 export type PriceUnit = '元/百万tokens'
 
@@ -130,3 +151,40 @@ export const TRAIN_CURSOR_COLLAPSED: Record<PeriodState, string> = {
 
 /** 常量：免责声明（001-接口契约 §6 / 003-接口契约 §6）。 */
 export const DISCLAIMER = '价格基于 IT之家公开的 DeepSeek V4 分时段报价（元 / 百万 tokens），仅用于界面演示，正式接入请以官方实时接口为准'
+
+/**
+ * 演示用量数据（IT之家公开数据推算）。
+ * ⚠️ 接入后以真实 API 为准，此处仅作界面演示占位。
+ */
+export const DEMO_USAGE: UsageSnapshot = {
+  inputTokens: 1200,
+  outputTokens: 3400,
+  cacheHit: 800,
+  cacheMiss: 400,
+  cacheHitRate: 66.7, // 800 / 1200
+  estimatedCost: 0.42,
+  costs: {
+    'V4-Flash': { idle: 0.1, peak: 0.2 },
+    'V4-Pro': { idle: 0.32, peak: 0.64 },
+  },
+}
+
+/** 格式化 token 数量（千位缩写：1200 → 1.2k）。 */
+export function formatTokenCount(count: number): string {
+  if (count >= 1_000_000) return `${(count / 1_000_000).toFixed(1)}m`
+  if (count >= 10_000) return `${(count / 1_000).toFixed(1)}k`
+  if (count >= 1_000) return `${(count / 1_000).toFixed(1)}k`
+  return String(count)
+}
+
+/** 格式化费用（¥ + 最多两位小数，省略末尾零）。 */
+export function formatCost(yuan: number): string {
+  if (yuan < 0.01) return `¥${yuan.toFixed(4)}`
+  if (yuan < 1) return `¥${yuan.toFixed(2)}`
+  return `¥${yuan.toFixed(2)}`
+}
+
+/** 格式化百分比（0–100 → 66.7%）。 */
+export function formatRate(rate: number): string {
+  return `${rate.toFixed(1)}%`
+}

@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Animal Crossing 风格 · DSH 侧边栏小组件 v2</title>
+<style>
+/* ─── tokens · Animal Crossing UI 语言（源自 animal-island-vue 参考库）─── */
+:root {
+  --ac-outline: #6b4d33;        /* 粗暖棕描边 / 文字 */
+  --ac-outline-soft: #c9b083;   /* 虚线 / 次级描边 */
+  --ac-ink: #6b4d33;
+  --ac-ink-2: #8a6a45;
+  --ac-cream: #fff6df;          /* 面板填充 */
+  --ac-cream-2: #fdf3d9;        /* 内嵌面板 */
+  --ac-paper: #fffaf0;          /* 贴纸 / 按钮底 */
+  --ac-bg: #fbeecb;             /* 页面底 */
+  --ac-mint: #19c8b9;
+  --ac-green: #6fba2c;
+  --ac-red: #e05a5a;            /* 高峰 · 红色闪烁叶子 */
+  --ac-orange: #e59266;  --ac-orange-deep: oklch(40% 0.11 45);
+  --ac-idle: #82d5bb;    --ac-idle-deep: oklch(32% 0.07 190);
+  --ac-yellow: #f7cd67;  --ac-blue: #889df0;  --ac-pink: #f8a6b2;
+  --ac-focus: #ffcc00;
+  --ac-edge: rgba(107, 77, 51, 0.28);
+  --ac-shadow: rgba(107, 77, 51, 0.18);
+  --ai-mint-pale: color-mix(in oklch, var(--ac-mint) 18%, oklch(100% 0 0));
+  --ai-blue-pale: color-mix(in oklch, var(--ac-blue) 16%, oklch(100% 0 0));
+  --ai-yellow-pale: color-mix(in oklch, var(--ac-yellow) 22%, oklch(100% 0 0));
+  --ai-pink-pale: color-mix(in oklch, var(--ac-pink) 20%, oklch(100% 0 0));
+  --ai-green-pale: color-mix(in oklch, var(--ac-green) 18%, oklch(100% 0 0));
+  --ai-red-pale: color-mix(in oklch, var(--ac-red) 18%, oklch(100% 0 0));
+  --ai-teal-ink: oklch(33% 0.07 190);
+  --ai-blue-ink: oklch(40% 0.13 262);
+  --ai-amber-ink: oklch(44% 0.12 75);
+  --ai-pink-ink: oklch(45% 0.12 10);
+  --font-round: 'Nunito', ui-rounded, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  --fs-h1: clamp(28px, 4.4vw, 46px);
+  --fs-h2: clamp(22px, 2.8vw, 30px);
+  --container: 1140px; --gutter: 28px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; color: var(--ac-ink);
+  font-family: var(--font-round); font-size: 15px; font-weight: 700; line-height: 1.6;
+  text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased;
+  background:
+    radial-gradient(circle, rgba(201, 176, 131, 0.22) 1.6px, transparent 1.6px) 0 0/26px 26px,
+    radial-gradient(circle, rgba(255, 255, 255, 0.55) 1px, transparent 1px) 13px 13px/13px 13px,
+    var(--ac-bg);
+}
+img, svg { display: block; max-width: 100%; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; cursor: pointer; }
+p { text-wrap: pretty; }
+h1, h2, h3 { text-wrap: balance; }
+button:focus-visible, a:focus-visible { outline: 3px solid var(--ac-focus); outline-offset: 2px; border-radius: 6px; }
+
+.container { max-width: var(--container); margin-inline: auto; padding-inline: var(--gutter); }
+.section { padding-block: clamp(40px, 6vw, 72px); }
+.section + .section { border-top: 2.5px dashed var(--ac-outline-soft); }
+
+/* ─── topnav + 时段切换 ─────────────────────────────────────────── */
+.topnav { position: sticky; top: 0; z-index: 20; background: color-mix(in oklch, var(--ac-bg) 90%, transparent); backdrop-filter: blur(12px); border-bottom: 2.5px dashed var(--ac-outline-soft); }
+.topnav-inner { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 12px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand .leaf { width: 22px; height: 22px; color: var(--ac-green); }
+.brand .logo { font-weight: 900; font-size: 16px; letter-spacing: 0.01em; }
+.brand .sub { font-weight: 800; font-size: 11px; color: var(--ac-ink-2); }
+.seg { display: inline-flex; align-items: center; gap: 2px; background: var(--ac-paper); border: 2.5px solid var(--ac-outline); border-radius: 999px; padding: 3px; box-shadow: 0 3px 0 0 var(--ac-edge); }
+.seg button { display: inline-flex; align-items: center; gap: 6px; border: 0; background: transparent; border-radius: 999px; padding: 6px 13px; font-size: 12.5px; font-weight: 900; color: var(--ac-ink-2); transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+.seg button:hover { color: var(--ac-ink); transform: translateY(-1px); }
+.seg button[aria-pressed="true"] { background: var(--ai-green-pale); color: var(--ac-ink); }
+.seg .sd { width: 7px; height: 7px; border-radius: 50%; }
+.seg .sd.pk { background: var(--ac-orange); }
+.seg .sd.id { background: var(--ac-idle); }
+.seg button[aria-pressed="true"] .sd.pk { background: var(--ac-orange-deep); }
+.seg button[aria-pressed="true"] .sd.id { background: var(--ac-idle-deep); }
+.seg .seg-note { font-size: 11px; font-weight: 800; color: var(--ac-ink-2); padding-inline: 4px; }
+
+/* ─── hero ─────────────────────────────────────────────────────── */
+.hero { text-align: center; padding-block: clamp(56px, 8vw, 92px); }
+.hero .sticker {
+  display: inline-block; padding: 5px 16px; border-radius: 999px;
+  background: var(--ai-green-pale); border: 2.5px solid var(--ac-outline);
+  color: var(--ac-ink); font-weight: 900; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+  transform: rotate(-2deg); box-shadow: 0 3px 0 0 var(--ac-edge); margin: 0 0 18px;
+}
+.hero h1 { font-weight: 900; font-size: var(--fs-h1); line-height: 1.1; letter-spacing: 0.005em; margin: 0 0 16px; }
+.hero .lead { font-size: 15px; line-height: 1.75; color: var(--ac-ink-2); margin: 0 auto; max-width: 64ch; }
+.hero .lead b { color: var(--ac-ink); }
+
+/* ─── token strip（贴纸） ───────────────────────────────────────── */
+.tokens { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.token { display: inline-flex; align-items: center; gap: 8px; background: var(--ac-paper); border: 2.5px solid var(--ac-outline); border-radius: 999px; padding: 5px 13px; font-weight: 900; font-size: 11.5px; color: var(--ac-ink); box-shadow: 0 3px 0 0 var(--ac-edge); }
+.token:nth-child(even) { transform: rotate(1deg); }
+.token:nth-child(odd) { transform: rotate(-1deg); }
+.token .sw { width: 14px; height: 14px; border-radius: 50%; box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.12), 0 0 0 1.5px var(--ac-outline-soft); }
+.token .sw.mint { background: var(--ac-mint); }
+.token .sw.brown { background: var(--ac-outline); }
+.token .sw.cream { background: var(--ac-cream); }
+.token .sw.edge { background: var(--ac-outline-soft); }
+.token .sw.yellow { background: var(--ac-focus); }
+.token .sw.pattern { background: radial-gradient(circle, rgba(233, 146, 102, 0.6) 1.5px, transparent 1.5px) 0 0/8px 8px, var(--ai-yellow-pale); }
+
+/* ─── showcase ─────────────────────────────────────────────────── */
+.spec { position: relative; background: var(--ac-cream); border: 3px solid var(--ac-outline); border-radius: 26px; padding: 20px 24px 24px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 6px 0 0 var(--ac-edge), 0 16px 26px var(--ac-shadow); }
+.spec::after { content: ""; position: absolute; top: -2px; right: 34px; width: 44px; height: 16px; background: var(--ac-paper); border: 2.5px solid var(--ac-outline); border-top: 0; border-radius: 0 0 12px 12px; }
+.spec-top { display: flex; align-items: flex-start; gap: 12px; }
+.spec-idx { font-weight: 900; font-size: 12px; color: var(--ac-outline); background: var(--ai-yellow-pale); border: 2px solid var(--ac-outline); border-radius: 8px; padding: 2px 6px; margin-top: 2px; }
+.spec-titles h3 { font-weight: 900; font-size: 20px; margin: 0; }
+.spec-titles .en { font-weight: 800; font-size: 10px; color: var(--ac-ink-2); letter-spacing: 0.09em; }
+.spec-tags { margin-left: auto; display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.spec-tag { font-size: 10.5px; font-weight: 900; color: var(--ac-ink); border: 2px solid var(--ac-outline); background: var(--ac-paper); padding: 2px 9px; border-radius: 999px; }
+.spec-desc { font-size: 13px; line-height: 1.6; color: var(--ac-ink-2); margin: 0; max-width: 60ch; }
+.spec-stages { display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-start; }
+.stage { display: flex; flex-direction: column; gap: 6px; }
+.stage-tag { font-weight: 900; font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ac-ink-2); }
+.stage-frame { border-radius: 18px; padding: 12px; background: var(--ac-cream-2); box-shadow: inset 0 0 0 2px var(--ac-outline-soft); }
+.stage-frame.exp { width: 268px; }
+.stage-frame.coll { width: 62px; }
+.sb { display: flex; flex-direction: column; }
+.sb .w { margin-bottom: 10px; }
+.sb-set, .rail-set { display: flex; align-items: center; gap: 7px; color: var(--ac-ink-2); font-size: 12px; font-weight: 900; padding: 6px 8px; border-radius: 10px; }
+.sb-set svg, .rail-set svg { width: 14px; height: 14px; }
+.rail { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.rail-set { padding: 4px; }
+.rail-set svg { width: 15px; height: 15px; }
+
+/* ─── 组件共享原语 ─────────────────────────────────────────────── */
+.w { font-family: var(--font-round); font-size: 11px; width: 100%; min-width: 0; color: var(--ac-ink); }
+.lpk, .lidle { display: inline; }
+body[data-period="peak"] .lidle, body[data-period="idle"] .lpk { display: none; }
+.tl-bar { position: relative; border-radius: 999px; height: 11px; margin-top: 10px; }
+.tl-track { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; display: flex; }
+.tl-track > i { display: block; }
+.tl-cur { position: absolute; left: 43.75%; z-index: 1; transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+body[data-period="idle"] .tl-cur { left: 90%; }
+.tl-meta { margin-top: 7px; font-size: 9.5px; font-weight: 900; letter-spacing: 0.02em; color: var(--ac-ink-2); }
+.inner { background: var(--ac-cream-2); border: 2px dashed var(--ac-outline-soft); border-radius: 16px; padding: 6px 9px; }
+.wt { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.wt th, .wt td { font-size: 10.5px; line-height: 1.55; padding: 3px 2px; text-align: left; }
+.wt td:nth-child(2), .wt td:nth-child(3), .wt th:nth-child(2), .wt th:nth-child(3) { width: 46px; text-align: right; }
+.wt .n { font-variant-numeric: tabular-nums; }
+.wt .hx { display: block; height: 2.5px; margin-top: 2px; border-radius: 3px; opacity: 0; transition: opacity 0.2s ease; }
+body[data-period="peak"] .wt .hx.hp, body[data-period="idle"] .wt .hx.hi { opacity: 1; background: var(--now-deep); }
+.w-foot { margin-top: 8px; padding-top: 6px; font-size: 9.5px; font-weight: 900; color: var(--ac-ink-2); display: flex; align-items: center; gap: 6px; }
+.w-foot .leaf { width: 11px; height: 11px; color: var(--ac-green); flex: none; }
+.w-toggle {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  width: 100%; margin-top: 8px; padding: 5px 12px;
+  border: 2.5px solid var(--ac-outline); background: transparent; text-align: left; cursor: pointer;
+  font-weight: 900; font-size: 11px; letter-spacing: 0.02em; color: var(--ac-ink);
+  border-radius: 999px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.w-toggle .t-chev { width: 12px; height: 12px; flex: none; transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+.pane:not(.is-collapsed) .w-toggle .t-chev { transform: rotate(90deg); }
+.w1.is-collapsed .price-inner, .w1.is-collapsed .w-foot,
+.w2.is-collapsed .detail-inner, .w2.is-collapsed .w-foot { display: none; }
+
+/* ─── 视图切换按钮 + 时段贴纸 ──────────────────────────────────── */
+.view-switch {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 4px 12px; min-width: 122px; border-radius: 999px;
+  background: var(--ai-green-pale);
+  border: 2.5px solid var(--ac-outline);
+  color: var(--ac-ink); font-weight: 900; font-size: 12px; letter-spacing: 0.02em;
+  box-shadow: 0 3px 0 0 var(--ac-edge);
+  white-space: nowrap;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.view-switch .swap-ico { width: 12px; height: 12px; flex: none; color: var(--ac-green); }
+.view-switch .v-usage { display: none; }
+body[data-tab="usage"] .view-switch .v-pricing { display: none; }
+body[data-tab="usage"] .view-switch .v-usage { display: inline; }
+body[data-tab="usage"] .view-switch { background: var(--ai-pink-pale); }
+body[data-tab="usage"] .view-switch .swap-ico { color: var(--ai-pink-ink); }
+.view-switch:hover { transform: translateY(-1px); box-shadow: 0 4px 0 0 var(--ac-edge); }
+.view-switch:active { transform: translateY(2px); box-shadow: 0 1px 0 0 var(--ac-edge); }
+.view-switch.sw-in { animation: pane-in 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+.sticker {
+  position: relative;
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px; border-radius: 999px;
+  background: var(--ac-paper);
+  border: 2.5px solid var(--now-deep);
+  color: var(--now-deep); font-weight: 900; font-size: 10.5px; letter-spacing: 0.03em;
+  transform: rotate(-2deg);
+  box-shadow: 0 2px 0 0 color-mix(in oklch, var(--now-deep) 45%, transparent);
+}
+.sticker .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--now-deep); }
+.sticker .x2 {
+  position: absolute;
+  top: -12px; right: -6px;
+  font-style: normal; font-weight: 900; font-size: 12px; line-height: 1;
+  padding: 2px 6px; border-radius: 7px;
+  background: oklch(50% 0.2 27);
+  color: oklch(100% 0 0);
+  box-shadow: 0 2px 0 0 rgba(107, 77, 51, 0.35);
+  transform: rotate(-5deg);
+  z-index: 2;
+}
+
+/* ═══════ 合并组件（双视图标签页） ═══════ */
+.w3, .w3c {
+  --peak: var(--ac-orange); --peak-deep: var(--ac-orange-deep);
+  --idle: var(--ac-idle); --idle-deep: var(--ac-idle-deep);
+  --now: var(--peak); --now-deep: var(--peak-deep);
+}
+body[data-period="idle"] .w3, body[data-period="idle"] .w3c { --now: var(--idle); --now-deep: var(--idle-deep); }
+.w3 { background: var(--ac-cream); border: 3px solid var(--ac-outline); border-radius: 24px; padding: 12px; box-shadow: 0 5px 0 0 var(--ac-edge), 0 14px 22px var(--ac-shadow); }
+.w3 .w-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.w3 .panes { margin-top: 10px; }
+.w3 .pane > :first-child { margin-top: 0; }
+.w3 .pane.pane-in { animation: pane-in 0.28s cubic-bezier(0.4, 0, 0.2, 1); }
+.w3c.w3c-in { animation: pane-in 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+@keyframes pane-in { from { opacity: 0; transform: translateY(6px) scale(0.985); } to { opacity: 1; transform: none; } }
+
+/* 分时段计费 视图（作用域 .w1） */
+.w1 .tl-track { background: var(--ac-cream-2); border: 2.5px solid var(--ac-outline); box-shadow: inset 0 2px 4px rgba(107, 77, 51, 0.2); }
+.w1 .tl-track .s-peak { background: linear-gradient(180deg, color-mix(in oklch, var(--ac-orange) 72%, oklch(100% 0 0)), var(--ac-orange)); }
+.w1 .tl-track .s-idle { background: linear-gradient(180deg, color-mix(in oklch, var(--ac-idle) 72%, oklch(100% 0 0)), var(--ac-idle)); }
+.w1 .tl-cur { top: 50%; width: 12px; height: 12px; border-radius: 50%; background: var(--ac-paper); border: 3px solid var(--now-deep); transform: translate(-50%, -50%); box-shadow: 0 2px 0 0 rgba(107, 77, 51, 0.35); }
+.w1 .price-inner { margin-top: 6px; }
+.w1 .wt th { color: var(--ac-ink-2); font-weight: 900; font-size: 9px; letter-spacing: 0.08em; }
+.w1 .wt td { color: var(--ac-ink); }
+.w1 .wt tr + tr td, .w1 .wt thead th { border-top: 2px dashed var(--ac-outline-soft); }
+.w1 .wt .wtm td { color: var(--ac-ink); font-weight: 900; font-size: 10px; letter-spacing: 0.04em; }
+.w1 .wt .wtm svg { width: 9px; height: 9px; display: inline-block; vertical-align: -1px; margin-right: 4px; color: var(--ac-green); }
+.w1 .n.ci { color: var(--idle-deep); font-weight: 900; }
+.w1 .n.cp { color: var(--peak-deep); font-weight: 900; }
+.w1 .w-toggle { background: var(--ai-green-pale); box-shadow: 0 4px 0 0 var(--ac-edge); }
+.w1 .w-toggle:hover { transform: translateY(-1px); box-shadow: 0 5px 0 0 var(--ac-edge); background: color-mix(in oklch, var(--ai-green-pale) 88%, var(--ac-green)); }
+.w1 .w-toggle:active { transform: translateY(2px); box-shadow: 0 1px 0 0 var(--ac-edge); }
+
+/* 今日用量 视图（作用域 .w2） */
+.w2 .w-sub { margin-top: 2px; font-size: 9.5px; font-weight: 800; color: var(--ac-ink-2); }
+.w2 .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+.w2 .tile { border-radius: 30%; padding: 9px 4px 8px; text-align: center; border: 3px solid oklch(100% 0 0); box-shadow: 0 0 0 2.5px var(--ac-outline), 0 4px 0 0 var(--ac-edge); }
+.w2 .tile:nth-child(1) { transform: rotate(-2deg); }
+.w2 .tile:nth-child(2) { transform: rotate(1.5deg) translateY(1px); }
+.w2 .tile:nth-child(3) { transform: rotate(-1deg); }
+.w2 .tile .k { display: block; font-size: 8.5px; font-weight: 900; letter-spacing: 0.06em; }
+.w2 .tile .v { display: block; font-size: 16px; font-weight: 900; line-height: 1.3; }
+.w2 .tile .u { display: block; font-size: 8px; font-weight: 900; opacity: 0.85; }
+.w2 .t-in { background: var(--ai-mint-pale); color: var(--ai-teal-ink); }
+.w2 .t-out { background: var(--ai-blue-pale); color: var(--ai-blue-ink); }
+.w2 .t-cost { background: var(--ai-yellow-pale); color: var(--ai-amber-ink); }
+.w2 .w-toggle { background: var(--ai-yellow-pale); box-shadow: 0 4px 0 0 var(--ac-edge); }
+.w2 .w-toggle:hover { transform: translateY(-1px); box-shadow: 0 5px 0 0 var(--ac-edge); background: color-mix(in oklch, var(--ai-yellow-pale) 88%, var(--ac-yellow)); }
+.w2 .w-toggle:active { transform: translateY(2px); box-shadow: 0 1px 0 0 var(--ac-edge); }
+.w2 .detail-inner { margin-top: 6px; }
+.w2 .d-row { display: flex; justify-content: space-between; align-items: baseline; font-size: 10px; padding: 3px 2px; }
+.w2 .d-row + .d-row { border-top: 2px dashed var(--ac-outline-soft); }
+.w2 .d-row .n { font-weight: 900; }
+
+/* ─── 收起态指示器（跟随视图 + 时段） ─────────────────────────── */
+.w3c {
+  width: 42px; height: 54px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--ac-cream); border: 2.5px solid var(--ac-outline); border-radius: 16px;
+  box-shadow: 0 4px 0 0 var(--ac-edge), 0 10px 16px var(--ac-shadow);
+}
+.w3c .pricing-only, .w3c .usage-only { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+body[data-tab="usage"] .w3c .pricing-only { display: none; }
+.w3c .usage-only { display: none; }
+body[data-tab="usage"] .w3c .usage-only { display: flex; }
+.w3c .leaf { width: 14px; height: 14px; }
+.w3c .leaf-peak { color: var(--ac-red); animation: ai-pulse 2.4s ease-in-out infinite; }
+.w3c .leaf-idle { color: var(--ac-green); }
+body[data-period="peak"] .w3c .leaf-idle, body[data-period="idle"] .w3c .leaf-peak { display: none; }
+.w3c .lbl { font-weight: 900; font-size: 11px; }
+.w3c .coin { width: 18px; height: 18px; }
+.w3c .cost { font-weight: 900; font-size: 12px; letter-spacing: 0.01em; }
+
+@keyframes ai-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+/* ─── footer ─────────────────────────────────────────────────── */
+.footer { padding-block: 40px 56px; border-top: 2.5px dashed var(--ac-outline-soft); }
+.footer .f-title { font-weight: 900; font-size: 16px; margin: 0 0 6px; }
+.footer .f-note { color: var(--ac-ink-2); font-size: 13px; margin: 0; max-width: 76ch; }
+
+/* ─── responsive + motion ────────────────────────────────────── */
+@media (max-width: 640px) { .spec-stages { flex-direction: column; } .spec-tags { display: none; } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body data-period="peak" data-tab="pricing">
+
+<header class="topnav" data-od-id="topnav">
+  <div class="container topnav-inner">
+    <div class="brand">
+      <svg class="leaf" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20C4 10 12 4 20 4c0 8-6 16-16 16z"/><path d="M4 20C8 16 13 12 18 8"/></svg>
+      <span class="logo">Animal Island · DSH</span>
+      <span class="sub">动物森友会 UI · 双视图小组件</span>
+    </div>
+    <div class="seg" role="group" aria-label="模拟时段" data-od-id="period-toggle">
+      <span class="seg-note">模拟时段</span>
+      <button type="button" data-set-period="peak" aria-pressed="true"><i class="sd pk"></i>高峰</button>
+      <button type="button" data-set-period="idle" aria-pressed="false"><i class="sd id"></i>空闲</button>
+    </div>
+  </div>
+</header>
+
+<main id="content">
+
+  <section class="section hero" data-od-id="hero">
+    <div class="container">
+      <span class="sticker">Animal-Island × DeepSeek Harness</span>
+      <h1>一款组件，两个视图 · 无人岛的午后装进侧边栏</h1>
+      <p class="lead">复刻《动物森友会》界面语言：粗暖棕描边、厚纸板面板、NookPhone 应用格、虚线菜单。点左上角按钮可在<b>分时段计费</b>与<b>今日用量</b>间平滑切换；收起态随视图与时段变化——<b>高峰 = 红色闪烁叶子，空闲 = 绿色叶子</b>。</p>
+      <div class="tokens" style="margin-top: 26px;">
+        <span class="token"><i class="sw mint"></i>薄荷青</span>
+        <span class="token"><i class="sw brown"></i>暖棕描边</span>
+        <span class="token"><i class="sw cream"></i>奶油纸板</span>
+        <span class="token"><i class="sw edge"></i>厚底边</span>
+        <span class="token"><i class="sw yellow"></i>焦点黄</span>
+        <span class="token"><i class="sw pattern"></i>波点纹理</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" data-od-id="widgets">
+    <div class="container">
+      <div class="spec">
+        <div class="spec-top">
+          <span class="spec-idx">01</span>
+          <div class="spec-titles">
+            <h3>DeepSeek 报价</h3>
+            <span class="en">PEAK-VALLEY PRICING × DAILY USAGE · 双视图</span>
+          </div>
+          <div class="spec-tags"><span class="spec-tag">双视图</span><span class="spec-tag">叶子·金币</span><span class="spec-tag">虚线菜单</span></div>
+        </div>
+        <p class="spec-desc">一款组件、两个视图：默认「分时段计费」，点左上角按钮切换到「今日用量」（带过渡动画）。展开态可收起价格表 / 明细；收起态跟随当前视图与时段实时变化。</p>
+        <div class="spec-stages">
+          <div class="stage">
+            <span class="stage-tag">展开 · 侧边栏</span>
+            <div class="stage-frame exp">
+              <div class="sb">
+                <div class="w w3" data-od-id="combined-expanded">
+                  <div class="w-head">
+                    <button class="view-switch" type="button" aria-label="切换视图" aria-pressed="false" data-od-id="view-switch">
+                      <svg class="swap-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3L4 7l4 4M4 7h16M16 21l4-4-4-4M20 17H4"/></svg>
+                      <span class="v-label v-pricing">分时段计费</span>
+                      <span class="v-label v-usage">今日用量</span>
+                    </button>
+                    <span class="sticker"><i class="dot"></i><span class="lpk">高峰<i class="x2">×2</i></span><span class="lidle">空闲</span></span>
+                  </div>
+                  <div class="panes">
+                    <div class="pane w1" data-pane="pricing">
+                      <div class="tl-bar"><div class="tl-track"><i class="s-idle" style="width:37.5%"></i><i class="s-peak" style="width:12.5%"></i><i class="s-idle" style="width:8.34%"></i><i class="s-peak" style="width:16.66%"></i><i class="s-idle" style="width:25%"></i></div><span class="tl-cur"></span></div>
+                      <div class="tl-meta">高峰 09:00–12:00 · 14:00–18:00｜其余空闲</div>
+                      <button class="w-toggle" type="button" aria-expanded="true"><span>价格表</span><svg class="t-chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg></button>
+                      <div class="inner price-inner">
+                        <table class="wt">
+                          <thead><tr><th>计费项</th><th>空闲<i class="hx hi"></i></th><th>高峰<i class="hx hp"></i></th></tr></thead>
+                          <tbody>
+                            <tr class="wtm"><td colspan="3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20C4 10 12 4 20 4c0 8-6 16-16 16z"/><path d="M4 20C8 16 13 12 18 8"/></svg>V4-Flash</td></tr>
+                            <tr><td>输入 · 缓存命中</td><td class="n ci">0.05</td><td class="n cp">0.10</td></tr>
+                            <tr><td>输入 · 缓存未命中</td><td class="n ci">1.50</td><td class="n cp">3.00</td></tr>
+                            <tr><td>输出</td><td class="n ci">4.50</td><td class="n cp">9.00</td></tr>
+                            <tr class="wtm"><td colspan="3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20C4 10 12 4 20 4c0 8-6 16-16 16z"/><path d="M4 20C8 16 13 12 18 8"/></svg>V4-Pro</td></tr>
+                            <tr><td>输入 · 缓存命中</td><td class="n ci">0.15</td><td class="n cp">0.30</td></tr>
+                            <tr><td>输入 · 缓存未命中</td><td class="n ci">4.50</td><td class="n cp">9.00</td></tr>
+                            <tr><td>输出</td><td class="n ci">13.50</td><td class="n cp">27.00</td></tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <div class="w-foot"><svg class="leaf" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20C4 10 12 4 20 4c0 8-6 16-16 16z"/><path d="M4 20C8 16 13 12 18 8"/></svg>元 / 百万 tokens · 北京时间</div>
+                    </div>
+                    <div class="pane w2" data-pane="usage" hidden>
+                      <div class="w-sub">示例数据 · 按北京时间统计</div>
+                      <div class="tiles">
+                        <div class="tile t-in"><span class="k">输入</span><span class="v">1.2k</span><span class="u">tokens</span></div>
+                        <div class="tile t-out"><span class="k">输出</span><span class="v">3.4k</span><span class="u">tokens</span></div>
+                        <div class="tile t-cost"><span class="k">预估</span><span class="v">¥0.42</span><span class="u">费用</span></div>
+                      </div>
+                      <button class="w-toggle" type="button" aria-expanded="true"><span>明细</span><svg class="t-chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg></button>
+                      <div class="inner detail-inner">
+                        <div class="d-row"><span>输入 · 缓存命中</span><span class="n">0.8k</span></div>
+                        <div class="d-row"><span>输入 · 缓存未命中</span><span class="n">0.4k</span></div>
+                        <div class="d-row"><span>输出</span><span class="n">3.4k</span></div>
+                        <div class="d-row"><span>预估费用</span><span class="n">¥0.42</span></div>
+                      </div>
+                      <div class="w-foot"><svg class="leaf" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20C4 10 12 4 20 4c0 8-6 16-16 16z"/><path d="M4 20C8 16 13 12 18 8"/></svg>示例数据 · 接入后按真实用量统计</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="sb-set"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>设置</div>
+              </div>
+            </div>
+          </div>
+          <div class="stage">
+            <span class="stage-tag">收起 · 图标栏</span>
+            <div class="stage-frame coll">
+              <div class="rail">
+                <div class="w3c" data-od-id="combined-collapsed">
+                  <span class="pricing-only">
+                    <svg class="leaf leaf-peak" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20C4 10 12 4 20 4c0 8-6 16-16 16z"/><path d="M4 20C8 16 13 12 18 8"/></svg>
+                    <svg class="leaf leaf-idle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20C4 10 12 4 20 4c0 8-6 16-16 16z"/><path d="M4 20C8 16 13 12 18 8"/></svg>
+                    <span class="lbl"><span class="lpk">峰</span><span class="lidle">闲</span></span>
+                  </span>
+                  <span class="usage-only">
+                    <svg class="coin" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="var(--now-deep)" stroke="oklch(100% 0 0)" stroke-width="2"/><path d="M12 7v10M8.6 7.6L12 11l3.4-3.4M8.6 13h6.8" stroke="oklch(100% 0 0)" stroke-width="1.7"/></svg>
+                    <span class="cost">¥0.4</span>
+                  </span>
+                </div>
+                <div class="rail-set"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer" data-od-id="footer">
+  <div class="container">
+    <p class="f-title">这次对味了吗？告诉我保留 / 调整，我帮你落地成 DSH 侧边栏插件。</p>
+    <p class="f-note">设计语言提取自 animal-island-vue（《集合啦！动物森友会》风格，独立实现无任天堂官方素材）：粗暖棕描边、厚纸板底边、NookPhone 应用格、虚线菜单。价格沿用 DeepSeek 分时段报价；「今日用量」为演示占位。收起态：高峰 = 红色闪烁叶子、空闲 = 绿色叶子；「今日用量」视图收起显示金币与预估费用。</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var body = document.body;
+  var btns = document.querySelectorAll('[data-set-period]');
+  function apply(p) {
+    body.dataset.period = p;
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].setAttribute('aria-pressed', String(btns[i].dataset.setPeriod === p));
+    }
+  }
+  for (var i = 0; i < btns.length; i++) {
+    btns[i].addEventListener('click', function () { apply(this.dataset.setPeriod); });
+  }
+
+  var panes = document.querySelectorAll('.pane');
+  var w3c = document.querySelector('.w3c');
+  var viewBtn = document.querySelector('.view-switch');
+  function activate(p) {
+    body.dataset.tab = p;
+    for (var i = 0; i < panes.length; i++) {
+      var pon = panes[i].dataset.pane === p;
+      panes[i].hidden = !pon;
+      if (pon) {
+        panes[i].classList.remove('pane-in');
+        void panes[i].offsetWidth;
+        panes[i].classList.add('pane-in');
+      }
+    }
+    if (w3c) {
+      w3c.classList.remove('w3c-in');
+      void w3c.offsetWidth;
+      w3c.classList.add('w3c-in');
+    }
+    if (viewBtn) {
+      viewBtn.setAttribute('aria-pressed', String(p === 'usage'));
+      viewBtn.classList.remove('sw-in');
+      void viewBtn.offsetWidth;
+      viewBtn.classList.add('sw-in');
+    }
+  }
+  if (viewBtn) {
+    viewBtn.addEventListener('click', function () {
+      activate(body.dataset.tab === 'pricing' ? 'usage' : 'pricing');
+    });
+  }
+
+  var toggles = document.querySelectorAll('.w-toggle');
+  for (var m = 0; m < toggles.length; m++) {
+    toggles[m].addEventListener('click', function () {
+      var pane = this.closest('.pane');
+      if (!pane) return;
+      var collapsed = pane.classList.toggle('is-collapsed');
+      this.setAttribute('aria-expanded', String(!collapsed));
+    });
+  }
+})();
+</script>
+</body>
+</html>

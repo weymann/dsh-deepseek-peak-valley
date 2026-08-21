@@ -17,6 +17,28 @@ export type DualState = 'expanded' | 'collapsed';
 export type ModelName = 'V4-Flash' | 'V4-Pro';
 /** 计费项。 */
 export type BillingItem = '输入·缓存命中' | '输入·缓存未命中' | '输出';
+/** 双视图标签页（Animal Island 等双视图风格使用）。 */
+export type ViewTab = 'pricing' | 'usage';
+/** 会话用量快照（演示数据，正式接入以真实 API 为准）。 */
+export interface UsageSnapshot {
+    /** 输入 tokens 总数。 */
+    inputTokens: number;
+    /** 输出 tokens 总数。 */
+    outputTokens: number;
+    /** 输入 · 缓存命中 tokens。 */
+    cacheHit: number;
+    /** 输入 · 缓存未命中 tokens。 */
+    cacheMiss: number;
+    /** 缓存命中率（0–100，缓存命中 / 总输入）。 */
+    cacheHitRate: number;
+    /** 预估费用（元，两模型合计 · 当前时段）。 */
+    estimatedCost: number;
+    /** 分模型 · 分时段预估费用（元）。 */
+    costs: Record<ModelName, {
+        idle: number;
+        peak: number;
+    }>;
+}
 /** 价格单位：元 / 百万 tokens。 */
 export type PriceUnit = '元/百万tokens';
 /** 时段规则（北京时间）：高峰 = 09:00–12:00、14:00–18:00；空闲 = 其余全部时段。 */
@@ -76,3 +98,14 @@ export declare const TRAIN_CURSOR: Record<PeriodState, string>;
 export declare const TRAIN_CURSOR_COLLAPSED: Record<PeriodState, string>;
 /** 常量：免责声明（001-接口契约 §6 / 003-接口契约 §6）。 */
 export declare const DISCLAIMER = "\u4EF7\u683C\u57FA\u4E8E IT\u4E4B\u5BB6\u516C\u5F00\u7684 DeepSeek V4 \u5206\u65F6\u6BB5\u62A5\u4EF7\uFF08\u5143 / \u767E\u4E07 tokens\uFF09\uFF0C\u4EC5\u7528\u4E8E\u754C\u9762\u6F14\u793A\uFF0C\u6B63\u5F0F\u63A5\u5165\u8BF7\u4EE5\u5B98\u65B9\u5B9E\u65F6\u63A5\u53E3\u4E3A\u51C6";
+/**
+ * 演示用量数据（IT之家公开数据推算）。
+ * ⚠️ 接入后以真实 API 为准，此处仅作界面演示占位。
+ */
+export declare const DEMO_USAGE: UsageSnapshot;
+/** 格式化 token 数量（千位缩写：1200 → 1.2k）。 */
+export declare function formatTokenCount(count: number): string;
+/** 格式化费用（¥ + 最多两位小数，省略末尾零）。 */
+export declare function formatCost(yuan: number): string;
+/** 格式化百分比（0–100 → 66.7%）。 */
+export declare function formatRate(rate: number): string;

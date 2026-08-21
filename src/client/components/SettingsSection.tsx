@@ -1,8 +1,8 @@
 /**
  * 设置入口 · DS峰谷小组件（`settings.section` 页）。
  *
- * 用户需求（已确认）：设置里可切换 10 款风格 + 启停开关。
- * 内容：启停开关 / 模拟时段（演示覆盖）/ 十款风格选择 / 实时预览。
+ * 用户需求（已确认）：设置里可切换 11 款风格 + 启停开关。
+ * 内容：启停开关 / 模拟时段（演示覆盖）/ 风格选择 / 实时预览。
  * 写路径走本插件偏好 store（`settings.section` 的 owner props 只给 `{ close }`，
  * 文案/当前值/写路径由本插件自持）。
  */
@@ -10,10 +10,12 @@ import { useState } from 'react'
 import type { PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
 import type {} from '@deepseek-ai/dsh-client-runtime/client'
-import { STYLE_CATALOG, STYLE_IDS, type StyleId } from '../../core/catalog'
+import { STYLE_CATALOG, STYLE_IDS, isDualViewStyle, type StyleId } from '../../core/catalog'
+import type { ViewTab } from '../../core/types'
 import { setPeriodOverride, usePeriod } from '../state/period'
 import { setPreferences, usePreferences } from '../state/preferences'
-import { styleComponents } from '../styles/registry'
+import { useUsage } from '../state/usage'
+import { styleComponents, dualViewComponents } from '../styles/registry'
 
 /** `settings.section` 全量 props：owner 共享 `{ close }` + 全局标准套件。 */
 export type SettingsSectionProps = PropsRuntime<'settings.section'>
@@ -22,15 +24,19 @@ export type SettingsSectionProps = PropsRuntime<'settings.section'>
 export function SettingsSection(_props: SettingsSectionProps): JSX.Element {
   const preferences = usePreferences()
   const { period, cursorPercent } = usePeriod()
+  const usageState = useUsage()
   const components = styleComponents(preferences.styleId)
+  const dualComp = isDualViewStyle(preferences.styleId) ? dualViewComponents(preferences.styleId) : null
   const [previewExpanded, setPreviewExpanded] = useState(true)
+  const [previewViewTab, setPreviewViewTab] = useState<ViewTab>('pricing')
+  const [previewUsageDetail, setPreviewUsageDetail] = useState(true)
 
   return (
     <div className="ds-pv-settings">
       <h2>DS峰谷小组件</h2>
       <p className="ds-pv-desc">
         按北京时间自动判定高峰（09:00–12:00、14:00–18:00）与空闲时段，在左侧边栏
-        展示分时段计费报价；可切换 10 款风格。价格基于公开报价，仅作演示。
+        展示分时段计费报价；可切换 11 款风格。价格基于公开报价，仅作演示。
       </p>
 
       {/* 启停开关 */}
@@ -74,9 +80,9 @@ export function SettingsSection(_props: SettingsSectionProps): JSX.Element {
         </div>
       </div>
 
-      {/* 十款风格选择 */}
+      {/* 风格选择 */}
       <fieldset className="ds-pv-fieldset">
-        <legend>风格 · 10 款</legend>
+        <legend>风格 · 11 款</legend>
         <div className="ds-pv-styles">
           {STYLE_IDS.map((id) => (
             <StyleOption
@@ -95,19 +101,43 @@ export function SettingsSection(_props: SettingsSectionProps): JSX.Element {
         <div className="ds-pv-preview-stack">
           <div className="ds-pv-preview-item ds-pv-preview-item--expanded">
             <span className="ds-pv-preview-label">正常 · 展开态</span>
-            <div className="ds-pv" data-period={period} role="group" aria-label="预览·展开态">
-              <components.Expanded
-                period={period}
-                cursorPercent={cursorPercent}
-                priceTableExpanded={previewExpanded}
-                onTogglePriceTable={() => setPreviewExpanded((v) => !v)}
-              />
+            <div className="ds-pv" data-period={period} data-tab={previewViewTab} role="group" aria-label="预览·展开态">
+              {dualComp ? (
+                <dualComp.DualExpanded
+                  period={period}
+                  cursorPercent={cursorPercent}
+                  priceTableExpanded={previewExpanded}
+                  onTogglePriceTable={() => setPreviewExpanded((v) => !v)}
+                  viewTab={previewViewTab}
+                  onToggleViewTab={() => setPreviewViewTab((v) => (v === 'pricing' ? 'usage' : 'pricing'))}
+                  usageDetailExpanded={previewUsageDetail}
+                  onToggleUsageDetail={() => setPreviewUsageDetail((v) => !v)}
+                  usage={usageState.usage}
+                  usageReal={usageState.real}
+                />
+              ) : (
+                <components.Expanded
+                  period={period}
+                  cursorPercent={cursorPercent}
+                  priceTableExpanded={previewExpanded}
+                  onTogglePriceTable={() => setPreviewExpanded((v) => !v)}
+                />
+              )}
             </div>
           </div>
           <div className="ds-pv-preview-item ds-pv-preview-item--collapsed">
             <span className="ds-pv-preview-label">缩小 · 收起态</span>
-            <div className="ds-pv" data-period={period} role="group" aria-label="预览·收起态">
-              <components.Collapsed period={period} cursorPercent={cursorPercent} />
+            <div className="ds-pv" data-period={period} data-tab={previewViewTab} role="group" aria-label="预览·收起态">
+              {dualComp ? (
+                <dualComp.DualCollapsed
+                  period={period}
+                  cursorPercent={cursorPercent}
+                  viewTab={previewViewTab}
+                  usage={usageState.usage}
+                />
+              ) : (
+                <components.Collapsed period={period} cursorPercent={cursorPercent} />
+              )}
             </div>
           </div>
         </div>

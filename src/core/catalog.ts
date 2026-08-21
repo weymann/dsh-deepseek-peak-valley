@@ -8,8 +8,8 @@
  * 本模块为纯 TS，零外部依赖。
  */
 
-/** 风格编号：'01'…'10'。 */
-export type StyleId = '01' | '02' | '03' | '04' | '05' | '06' | '07' | '08' | '09' | '10'
+/** 风格编号：'01'…'11'。 */
+export type StyleId = '01' | '02' | '03' | '04' | '05' | '06' | '07' | '08' | '09' | '10' | '11'
 
 /** 单款风格规格。 */
 export interface StyleSpec {
@@ -169,12 +169,33 @@ export const STYLE_CATALOG: StyleCatalog = {
     },
     semantic: { peak: 'warm', idle: 'cool' },
   },
+  '11': {
+    id: '11',
+    nameZh: '无人岛',
+    nameEn: 'Animal Island',
+    enLabel: 'ACNH · DUAL-VIEW · LEAF',
+    tags: ['双视图', '暖棕描边', '动森'],
+    description: '复刻《动物森友会》UI 语言：粗暖棕描边、厚纸板面板、NookPhone 应用格。支持双视图——分时段计费与当前会话用量平滑切换；收起态跟随视图与时段变化。',
+    stage: {
+      expanded: '动森面板：双视图标签页（分时段计费 / 当前会话用量），左边切换按钮；计费视图含时间轴 + 价格表；用量视图含 3 个旋转贴纸 tile（输入/输出/缓存命中率）+ 明细（含 V4-Flash / V4-Pro 空闲与高峰费用）；高峰 = 红色闪烁叶子 + ×2 标签；虚线圆角内嵌面板。',
+      collapsed: '42×54 暖棕圆角卡：计费视图 = 叶子 + 峰/闲（高峰红色脉冲）；用量视图 = 金币图标 + 费用；跟随当前视图实时切换。',
+    },
+    semantic: { peak: 'warm', idle: 'cool' },
+  },
 }
 
 /** 全部风格编号（目录顺序）。 */
 export const STYLE_IDS: readonly StyleId[] = [
-  '01', '02', '03', '04', '05', '06', '07', '08', '09', '10',
+  '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11',
 ]
 
 /** 默认风格。 */
 export const DEFAULT_STYLE_ID: StyleId = '01'
+
+/** 双视图风格集合（支持 分时段计费 / 当前会话用量 切换）。 */
+export const DUAL_VIEW_STYLES: ReadonlySet<StyleId> = new Set<StyleId>(['11'])
+
+/** 判断某风格是否支持双视图。 */
+export function isDualViewStyle(id: StyleId): boolean {
+  return DUAL_VIEW_STYLES.has(id)
+}

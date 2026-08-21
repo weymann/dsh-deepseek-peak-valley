@@ -9,13 +9,17 @@
  * owner props `{ wide }`），不在本 store 内。
  */
 import type { SessionId } from '@deepseek-ai/dsh-client-runtime/client';
-import type { DualState } from '../../core/types';
+import type { DualState, ViewTab } from '../../core/types';
 /** 每会话的双态记录。 */
 export interface SessionDualState {
     /** 价格表展开/收起。 */
     dual: DualState;
     /** 价格表是否展开（DualState 的布尔面）。 */
     priceTableExpanded: boolean;
+    /** 双视图标签页（Animal Island 等双视图风格使用）。 */
+    viewTab: ViewTab;
+    /** 用量明细展开/收起。 */
+    usageDetailExpanded: boolean;
 }
 /** 不可变快照：bucket 集合（Map 只读视图，版本号驱动 React 重渲染）。 */
 export interface DualStateSnapshot {
@@ -25,8 +29,16 @@ export interface DualStateSnapshot {
 /** 取某会话的双态记录（缺省收起）。 */
 export declare function getSessionDualState(sessionId: string): SessionDualState;
 /** 设置某会话价格表展开/收起。 */
-export declare function setPriceTableExpanded(sessionId: string, expanded: boolean): void;
-/** 组件内读取某会话的双态记录。 */
+export declare function setPriceTableExpanded(sessionId: string | undefined, expanded: boolean): void;
+/** 切换某会话的视图标签页。 */
+export declare function toggleViewTab(sessionId: string | undefined): void;
+/** 设置某会话用量明细展开/收起。 */
+export declare function setUsageDetailExpanded(sessionId: string | undefined, expanded: boolean): void;
+/**
+ * 组件内读取某会话的双态记录。
+ * 为避免「无活跃会话时 UI 开关失效」，这里对 undefined 做本地兜底：
+ * 使用稳定匿名 key 记忆当前浏览器内的 UI 状态。
+ */
 export declare function useSessionDualState(sessionId: SessionId | undefined): SessionDualState;
 /** fiber dispose 时清空分桶（003 契约：dispose 清理 controller 状态）。 */
 export declare function resetDualStateBuckets(): void;

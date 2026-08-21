@@ -3,7 +3,7 @@
  *
  * 全局偏好（跨会话，localStorage 持久化）：
  * - enabled：启停开关（关闭时侧边栏小组件不渲染）
- * - styleId：所选风格（十款之一）
+ * - styleId：所选风格（11 款之一）
  *
  * 写路径走本插件自己的偏好 store（003 契约：文案/当前值/写路径走自己的
  * inject face；纯 client 无后端，持久化落在浏览器 localStorage）。

@@ -7,15 +7,23 @@
  *   驱动全部风格的语义配色。
  * - 价格表展开/收起（DualState）按 SessionId 分桶记忆（003 用例 7 隔离）。
  * - 关闭时（设置里启停开关）返回 null。
+ * - 双视图风格（Animal Island）额外注入 viewTab / usageDetail 状态。
  */
 import type { PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
 import type {} from '@deepseek-ai/dsh-client-runtime/client'
 import type { SessionId } from '@deepseek-ai/dsh-client-runtime/client'
-import { useSessionDualState, setPriceTableExpanded } from '../state/dual-state'
+import { isDualViewStyle } from '../../core/catalog'
+import {
+  useSessionDualState,
+  setPriceTableExpanded,
+  toggleViewTab,
+  setUsageDetailExpanded,
+} from '../state/dual-state'
 import { usePeriod } from '../state/period'
 import { usePreferences } from '../state/preferences'
-import { styleComponents } from '../styles/registry'
+import { useUsage } from '../state/usage'
+import { styleComponents, dualViewComponents } from '../styles/registry'
 
 /** `sidebar.footer.action` 全量 props：owner 共享 `{ wide }` + 全局标准套件。 */
 export type PeakValleyWidgetProps = PropsRuntime<'sidebar.footer.action'>
@@ -25,27 +33,60 @@ export function PeakValleyWidget(props: PeakValleyWidgetProps): JSX.Element | nu
   const { wide } = props
   const preferences = usePreferences()
   const { period, cursorPercent } = usePeriod()
+  const usageState = useUsage()
   const sessionId: SessionId | undefined = props.useSessions((state) => state.current)
   const dual = useSessionDualState(sessionId)
   const components = styleComponents(preferences.styleId)
 
   if (!preferences.enabled) return null
 
+  const isDual = isDualViewStyle(preferences.styleId)
+  const dualComp = isDual ? dualViewComponents(preferences.styleId) : null
+
   return (
-    <div className="ds-pv" data-period={period} role="group" aria-label="DeepSeek 分时段计费小组件">
+    <div className="ds-pv" data-period={period} data-tab={dual.viewTab} role="group" aria-label="DeepSeek 分时段计费小组件">
       {wide ? (
-        <components.Expanded
-          period={period}
-          cursorPercent={cursorPercent}
-          priceTableExpanded={dual.priceTableExpanded}
-          onTogglePriceTable={() => {
-            if (sessionId !== undefined) {
+        dualComp ? (
+          <dualComp.DualExpanded
+            period={period}
+            cursorPercent={cursorPercent}
+            priceTableExpanded={dual.priceTableExpanded}
+            onTogglePriceTable={() => {
               setPriceTableExpanded(sessionId, !dual.priceTableExpanded)
-            }
-          }}
-        />
+            }}
+            viewTab={dual.viewTab}
+            onToggleViewTab={() => {
+              toggleViewTab(sessionId)
+            }}
+            usageDetailExpanded={dual.usageDetailExpanded}
+            onToggleUsageDetail={() => {
+              setUsageDetailExpanded(sessionId, !dual.usageDetailExpanded)
+            }}
+            usage={usageState.usage}
+            usageReal={usageState.real}
+          />
+        ) : (
+          <components.Expanded
+            period={period}
+            cursorPercent={cursorPercent}
+            priceTableExpanded={dual.priceTableExpanded}
+            onTogglePriceTable={() => {
+              if (sessionId !== undefined) {
+                setPriceTableExpanded(sessionId, !dual.priceTableExpanded)
+              }
+            }}
+          />
+        )
       ) : (
-        <components.Collapsed period={period} cursorPercent={cursorPercent} />
+        dualComp ? (
+          <dualComp.DualCollapsed
+            period={period}
+            cursorPercent={cursorPercent}
+            viewTab={dual.viewTab}
+          />
+        ) : (
+          <components.Collapsed period={period} cursorPercent={cursorPercent} />
+        )
       )}
     </div>
   )

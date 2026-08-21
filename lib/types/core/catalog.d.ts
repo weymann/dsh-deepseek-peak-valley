@@ -7,8 +7,8 @@
  *
  * 本模块为纯 TS，零外部依赖。
  */
-/** 风格编号：'01'…'10'。 */
-export type StyleId = '01' | '02' | '03' | '04' | '05' | '06' | '07' | '08' | '09' | '10';
+/** 风格编号：'01'…'11'。 */
+export type StyleId = '01' | '02' | '03' | '04' | '05' | '06' | '07' | '08' | '09' | '10' | '11';
 /** 单款风格规格。 */
 export interface StyleSpec {
     id: StyleId;
@@ -42,3 +42,7 @@ export declare const STYLE_CATALOG: StyleCatalog;
 export declare const STYLE_IDS: readonly StyleId[];
 /** 默认风格。 */
 export declare const DEFAULT_STYLE_ID: StyleId;
+/** 双视图风格集合（支持 分时段计费 / 当前会话用量 切换）。 */
+export declare const DUAL_VIEW_STYLES: ReadonlySet<StyleId>;
+/** 判断某风格是否支持双视图。 */
+export declare function isDualViewStyle(id: StyleId): boolean;
