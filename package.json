@@ -3,6 +3,14 @@
   "version": "0.1.0",
   "description": "DeepSeek 分时段计费小组件（DSH client 插件）：按北京时间自动判定高峰/空闲时段，10 款风格侧边栏小组件 + 设置页。价格基于 IT之家公开的 DeepSeek V4 分时段报价，仅作演示。",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/z-col/dsh-deepseek-peak-valley.git"
+  },
+  "homepage": "https://github.com/z-col/dsh-deepseek-peak-valley",
+  "bugs": {
+    "url": "https://github.com/z-col/dsh-deepseek-peak-valley/issues"
+  },
   "main": "lib/index.js",
   "types": "lib/types/index.d.ts",
   "exports": {
