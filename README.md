@@ -25,7 +25,6 @@
 
 > 想交互式切换查看每款风格的高峰/空闲表现？打开设计稿预览页：
 > [`deepseek-pricing-widget-styles.html`](deepseek-pricing-widget-styles.html)（浏览器直接打开，右上角可切换模拟时段）。
-> 完整文档：`docs/`。
 
 ---
 
@@ -51,4 +50,4 @@ pnpm watch       # client HMR 需 tsdown --watch 持续重写 lib/client.js
 
 - 挂载：`sidebar.footer.action`（owner `{ wide }`：展开=完整报价 / 收起=紧凑指示器）
 - 设置：`settings.section`「DS峰谷小组件」（启停 + 10 款风格切换 + 模拟时段 + 预览）
-- 共享数据模型（时段规则 / 价格表 / 双态）权威定义：`docs/A/A-01-PRD/001-核心引擎/001-接口契约.md`
+- 时段规则（北京时间）：高峰 09:00–12:00 / 14:00–18:00，其余空闲；高峰价 = 空闲 × 2

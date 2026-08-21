@@ -3,3 +3,6 @@ node_modules/
 .DS_Store
 .vision/
 .dsh-vision-toolkit/
+# 文档驱动工作流内部产物（不入公开仓库）
+AGENTS.md
+docs/
