@@ -2,7 +2,7 @@
 
 **v0.1.0** · DeepSeek 分时段计费小组件 · DSH client 插件（platform=web）
 
-[![dsh-plugin](https://img.shields.io/badge/dsh-plugin-4C8BF5?logo=deepseek)](#) [![DSH rc.8](https://img.shields.io/badge/DSH-rc.8-1F6FEB?logo=deepseek)](#) [![license MIT](https://img.shields.io/badge/license-MIT-green)](#) · `sidebar.footer.action` · `settings.section`
+[![dsh-plugin](https://img.shields.io/badge/dsh-plugin-4C8BF5?logo=deepseek)](#) [![DSH rc.8](https://img.shields.io/badge/DSH-rc.8-1F6FEB?logo=deepseek)](#) [![license MIT](https://img.shields.io/badge/license-MIT-green)](#) 
 
 按北京时间自动判定高峰（09:00–12:00、14:00–18:00）/ 空闲时段，在 DSH Web
 左侧边栏左下角（设置上方）展示分时段计费报价；支持 **10 款风格切换** 与启停开关（设置页「DS峰谷小组件」）。
