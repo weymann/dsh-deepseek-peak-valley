@@ -175,9 +175,9 @@ export const STYLE_CATALOG: StyleCatalog = {
     nameEn: 'Animal Island',
     enLabel: 'ACNH · DUAL-VIEW · LEAF',
     tags: ['双视图', '暖棕描边', '动森'],
-    description: '复刻《动物森友会》UI 语言：粗暖棕描边、厚纸板面板、NookPhone 应用格。支持双视图——分时段计费与当前会话用量平滑切换；收起态跟随视图与时段变化。',
+    description: '复刻《动物森友会》UI 语言：粗暖棕描边、厚纸板面板、NookPhone 应用格。支持双视图——DeepSeek 与 Go套餐用量平滑切换；收起态跟随视图与时段变化。',
     stage: {
-      expanded: '动森面板：双视图标签页（分时段计费 / 当前会话用量），左边切换按钮；计费视图含时间轴 + 价格表；用量视图含 3 个旋转贴纸 tile（输入/输出/缓存命中率）+ 明细（含 V4-Flash / V4-Pro 空闲与高峰费用）；高峰 = 红色闪烁叶子 + ×2 标签；虚线圆角内嵌面板。',
+      expanded: '动森面板：双视图标签页（DeepSeek / Go套餐用量），左边切换按钮；计费视图含时间轴 + 余额查询；用量视图含 3 个旋转贴纸 tile（5小时/一周/一月·百分比+限额 $12/$30/$60）+ 明细；高峰 = 红色闪烁叶子 + ×2 标签；虚线圆角内嵌面板。',
       collapsed: '42×54 暖棕圆角卡：计费视图 = 叶子 + 峰/闲（高峰红色脉冲）；用量视图 = 金币图标 + 费用；跟随当前视图实时切换。',
     },
     semantic: { peak: 'warm', idle: 'cool' },

@@ -41,7 +41,7 @@ export interface UsageSnapshot {
 }
 /** 价格单位：元 / 百万 tokens。 */
 export type PriceUnit = '元/百万tokens';
-/** 时段规则（北京时间）：高峰 = 09:00–12:00、14:00–18:00；空闲 = 其余全部时段。 */
+/** 时段规则（北京时间）：工作日 高峰 = 09:00–12:00、14:00–18:00；周末 全天 空闲；空闲 = 其余全部时段。 */
 export interface PeriodWindow {
     /** 起始时刻（闭区间，含），HH:mm（24h）。 */
     start: string;

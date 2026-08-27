@@ -9,7 +9,7 @@
  * 对齐 001-测试-验收用例 用例 1：
  *   09:00 / 10:00 / 16:00 → peak；12:00 / 18:00 / 00:00 → idle。
  */
-import { PERIOD_RULE, type PeriodState } from './types'
+import { PERIOD_RULE, TIMELINE_SEGMENTS, type PeriodState, type TimelineSegment } from './types'
 
 /** 北京时区标识。 */
 export const BEIJING_TIMEZONE = 'Asia/Shanghai' as const
@@ -47,12 +47,26 @@ export function beijingMinutes(date: Date): number {
   return hour * 60 + minute
 }
 
+/** 取北京时区周几（0=周日 … 6=周六）。 */
+export function beijingWeekday(date: Date = new Date()): number {
+  const beijingStr = date.toLocaleString('en-US', { timeZone: BEIJING_TIMEZONE })
+  return new Date(beijingStr).getDay()
+}
+
+/** 是否为周末（周六/周日全天空闲）。 */
+export function isWeekend(date: Date = new Date()): boolean {
+  const d = beijingWeekday(date)
+  return d === 0 || d === 6
+}
+
 /**
  * 判定给定时刻（按北京时区）所处的时段。
+ * 周六/周日全天空闲，仅周一到周五按峰时窗口判定。
  * @param date 待判定的时刻；缺省为当前时刻。
  * @returns 'peak' | 'idle'
  */
 export function periodAt(date: Date = new Date()): PeriodState {
+  if (isWeekend(date)) return 'idle'
   const minutes = beijingMinutes(date)
   for (const window of PERIOD_RULE.peakWindows) {
     if (minutes >= minutesOf(window.start) && minutes < minutesOf(window.end)) {
@@ -65,6 +79,17 @@ export function periodAt(date: Date = new Date()): PeriodState {
 /** 当前北京时段（便捷函数）。 */
 export function currentPeriod(now: Date = new Date()): PeriodState {
   return periodAt(now)
+}
+
+/**
+ * 取当前日期对应的时间轴分段（周末全天空闲，仅工作日含高峰段）。
+ */
+export function timelineSegmentsAt(date: Date = new Date()): readonly TimelineSegment[] {
+  if (isWeekend(date)) {
+    // 周末：5 段保持宽度但全部置为 idle，避免误显示高峰色块
+    return TIMELINE_SEGMENTS.map((s) => ({ ...s, period: 'idle' as const }))
+  }
+  return TIMELINE_SEGMENTS
 }
 
 /**

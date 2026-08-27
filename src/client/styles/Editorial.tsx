@@ -5,15 +5,24 @@
  * 「分时段计费」；等宽数字 + 细分割线；当前列浅色底；页脚含「高峰 = 空闲 × 2」。
  */
 import type { PeriodState } from '../../core/types'
-import { Badge, PriceTable, Timeline, Toggle, UnitFooter } from '../components/primitives'
+import { Badge, DeepseekBalance, Timeline, Toggle, UsageBar, CountdownFooter } from '../components/primitives'
+import { isWeekend } from '../../core/period'
 import type { CollapsedProps, ExpandedProps } from './classic'
 
-/** 编辑 · 展开态。 */
+/** 编辑 · 展开态（余额查询替换价格表）。 */
 export function EditorialExpanded({
   period,
   priceTableExpanded,
   onTogglePriceTable,
   cursorPercent,
+  deepseek,
+  deepseekError,
+  deepseekStale,
+  deepseekLoading,
+  goQuota,
+  goQuotaError,
+  goQuotaStale,
+  goQuotaLoading,
 }: ExpandedProps): JSX.Element {
   return (
     <div className={`w ds-style-10${priceTableExpanded ? '' : ' is-collapsed'}`}>
@@ -24,10 +33,13 @@ export function EditorialExpanded({
         </div>
         <Badge period={period} />
       </div>
-      <Timeline period={period} meta="09:00–12:00 · 14:00–18:00 高峰（北京时间）" cursorPercent={cursorPercent} />
+      <Timeline period={period} meta={isWeekend(new Date()) ? '周末全天空闲｜低谷' : '09:00–12:00 · 14:00–18:00 高峰（北京时间）'} cursorPercent={cursorPercent} />
+      <UsageBar goQuota={goQuota} goQuotaError={goQuotaError} goQuotaStale={goQuotaStale} goQuotaLoading={goQuotaLoading} />
       <Toggle expanded={priceTableExpanded} onToggle={onTogglePriceTable} />
-      {priceTableExpanded && <PriceTable period={period} />}
-      {priceTableExpanded && <UnitFooter note="元 / 百万 tokens · 高峰 = 空闲 × 2" />}
+      {priceTableExpanded && (
+        <DeepseekBalance deepseek={deepseek} deepseekError={deepseekError} deepseekStale={deepseekStale} deepseekLoading={deepseekLoading} goQuota={goQuota} goQuotaError={goQuotaError} goQuotaStale={goQuotaStale} goQuotaLoading={goQuotaLoading} />
+      )}
+      {priceTableExpanded && <CountdownFooter />}
     </div>
   )
 }

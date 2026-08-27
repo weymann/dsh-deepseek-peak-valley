@@ -6,7 +6,10 @@
  */
 import type { ReactNode } from 'react'
 import type { PeriodState } from '../../core/types'
-import { Badge, PeriodWord, PriceTable, Timeline, Toggle, UnitFooter } from '../components/primitives'
+import { Badge, DeepseekBalance, PeriodWord, Timeline, Toggle, UsageBar, CountdownFooter } from '../components/primitives'
+import type { DeepseekBalanceData } from '../state/deepseek-balance'
+import type { GoQuotaUsage } from '../state/go-quota'
+import { isWeekend } from '../../core/period'
 
 /** 展开态通用 props（纯展示；DualState 由上层 Widget 注入）。 */
 export interface ExpandedProps {
@@ -17,6 +20,16 @@ export interface ExpandedProps {
   onTogglePriceTable: () => void
   /** 时间轴光标百分比（0–100，按当前北京时间实时计算）。 */
   cursorPercent: number
+  /** DeepSeek 余额（余额查询面板替换价格表）。 */
+  deepseek?: DeepseekBalanceData | null
+  deepseekError?: string | null
+  deepseekStale?: boolean
+  deepseekLoading?: boolean
+  /** Go 套餐用量（近 5 小时用量进度条）。 */
+  goQuota?: GoQuotaUsage | null
+  goQuotaError?: string | null
+  goQuotaStale?: boolean
+  goQuotaLoading?: boolean
 }
 
 /** 收起态通用 props。 */
@@ -37,10 +50,18 @@ export function ClassicExpanded({
   priceTableExpanded,
   onTogglePriceTable,
   cursorPercent,
-  meta = '高峰 09:00–12:00 · 14:00–18:00｜其余空闲',
+  meta,
   footer,
   badge = <Badge period={period} />,
-  name = 'DeepSeek 计费',
+  name = 'DeepSeek & Go',
+  deepseek,
+  deepseekError,
+  deepseekStale,
+  deepseekLoading,
+  goQuota,
+  goQuotaError,
+  goQuotaStale,
+  goQuotaLoading,
 }: {
   styleClass: string
   period: PeriodState
@@ -51,17 +72,28 @@ export function ClassicExpanded({
   footer?: ReactNode
   badge?: ReactNode
   name?: string
+  deepseek?: DeepseekBalanceData | null
+  deepseekError?: string | null
+  deepseekStale?: boolean
+  deepseekLoading?: boolean
+  goQuota?: GoQuotaUsage | null
+  goQuotaError?: string | null
+  goQuotaStale?: boolean
+  goQuotaLoading?: boolean
 }): JSX.Element {
+  const weekend = isWeekend(new Date())
+  const effectiveMeta = meta ?? (weekend ? '周末全天空闲｜低谷' : '高峰 09:00–12:00 · 14:00–18:00｜其余空闲')
   return (
     <div className={`w ${styleClass}${priceTableExpanded ? '' : ' is-collapsed'}`}>
       <div className="w-head">
         <span className="w-name">{name}</span>
         {badge}
       </div>
-      <Timeline period={period} meta={meta} cursorPercent={cursorPercent} />
+      <Timeline period={period} meta={effectiveMeta} cursorPercent={cursorPercent} />
+      <UsageBar goQuota={goQuota} goQuotaError={goQuotaError} goQuotaStale={goQuotaStale} goQuotaLoading={goQuotaLoading} />
       <Toggle expanded={priceTableExpanded} onToggle={onTogglePriceTable} />
-      {priceTableExpanded && <PriceTable period={period} />}
-      {priceTableExpanded && <UnitFooter>{footer}</UnitFooter>}
+      {priceTableExpanded && <DeepseekBalance deepseek={deepseek} deepseekError={deepseekError} deepseekStale={deepseekStale} deepseekLoading={deepseekLoading} goQuota={goQuota} goQuotaError={goQuotaError} goQuotaStale={goQuotaStale} goQuotaLoading={goQuotaLoading} />}
+      {priceTableExpanded && <CountdownFooter>{footer}</CountdownFooter>}
     </div>
   )
 }

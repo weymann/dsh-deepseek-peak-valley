@@ -3,18 +3,49 @@
  *
  * 独有特征（002-前端-页面交互 §06）：终端标题栏「deepseek-rate · v4」+ 三圆点；
  * 正文日志式 `$ ds rate --now` → `▸ 当前：高峰/空闲`（强调色）→ 时段说明；
- * 价格表为等宽 ttbl（flash / pro 两组，idle/peak 双列，当前时段列加粗）。
+ * 展开区为 DeepSeek 余额查询（同 AnimalIsland PricingView 复用 /deepseek/balance），
+ * 等宽对齐，保持终端 CLI 质感。
  */
-import { PRICE_TABLE, type BillingItem, type ModelName, type PeriodState } from '../../core/types'
-import { ITEM_ORDER, MODEL_ORDER, formatPrice, Toggle } from '../components/primitives'
+import { Toggle, UsageBar } from '../components/primitives'
+import { isWeekend } from '../../core/period'
 import type { CollapsedProps, ExpandedProps } from './classic'
+import type { DeepseekBalanceData } from '../state/deepseek-balance'
+import { useDeepseekBalance } from '../state/deepseek-balance'
+import { dollars, GO_LIMITS } from '../state/go-quota'
+import type { GoQuotaUsage } from '../state/go-quota'
+import { useCountdown } from '../state/countdown'
+
+/** 终端 · 展开态 props（兼容余额注入与自轮询）。 */
+export interface TerminalExpandedProps extends ExpandedProps {
+  /** DeepSeek 余额（ /deepseek/balance ）— 由 Widget 注入；未注入时组件内自取 useDeepseekBalance */
+  deepseek?: DeepseekBalanceData | null
+  deepseekError?: string | null
+  deepseekStale?: boolean
+  deepseekLoading?: boolean
+}
 
 /** 终端 · 展开态。 */
 export function TerminalExpanded({
   period,
   priceTableExpanded,
   onTogglePriceTable,
-}: ExpandedProps): JSX.Element {
+  deepseek: deepseekProp,
+  deepseekError: deepseekErrorProp,
+  deepseekStale: deepseekStaleProp,
+  deepseekLoading: deepseekLoadingProp,
+  goQuota,
+  goQuotaError,
+  goQuotaStale,
+  goQuotaLoading,
+}: TerminalExpandedProps): JSX.Element {
+  // 若上层未注入（经典风格走 components.Expanded 通用路径），则自取轮询 store
+  const fallback = useDeepseekBalance()
+  const { remaining } = useCountdown()
+  const deepseek = deepseekProp !== undefined ? deepseekProp : fallback.data
+  const deepseekError = deepseekErrorProp !== undefined ? deepseekErrorProp : fallback.error
+  const deepseekStale = deepseekStaleProp !== undefined ? deepseekStaleProp : fallback.stale
+  const deepseekLoading = deepseekLoadingProp !== undefined ? deepseekLoadingProp : fallback.loading
+
   return (
     <div className={`w ds-style-06${priceTableExpanded ? '' : ' is-collapsed'}`}>
       <div className="term-bar">
@@ -24,56 +55,117 @@ export function TerminalExpanded({
       <div className="term-body">
         <div className="tline"><span className="ps">$</span><span className="txt">ds rate --now</span></div>
         <div className="tline"><span className="ps">▸</span><span className="nowv">{period === 'peak' ? '当前：高峰' : '当前：空闲'}</span></div>
-        <div className="tline"><span className="dim">09:00–12:00 · 14:00–18:00</span></div>
+        <div className="tline"><span className="dim">{isWeekend(new Date()) ? '周末全天空闲｜低谷' : '09:00–12:00 · 14:00–18:00'}</span></div>
+        <UsageBar goQuota={goQuota} goQuotaError={goQuotaError} goQuotaStale={goQuotaStale} goQuotaLoading={goQuotaLoading} />
         <Toggle expanded={priceTableExpanded} onToggle={onTogglePriceTable} />
-        {priceTableExpanded && <TerminalTable period={period} />}
+        {priceTableExpanded && (
+          <TerminalBalance
+            deepseek={deepseek}
+            deepseekError={deepseekError}
+            deepseekStale={deepseekStale}
+            deepseekLoading={deepseekLoading}
+            goQuota={goQuota}
+            goQuotaError={goQuotaError}
+            goQuotaStale={goQuotaStale}
+            goQuotaLoading={goQuotaLoading}
+          />
+        )}
       </div>
-      {priceTableExpanded && <div className="term-foot">元 / 百万 tokens · 北京时间</div>}
+      {priceTableExpanded && (
+        <div className="term-foot">
+          更新频率 · 剩 {remaining}s
+        </div>
+      )}
     </div>
   )
 }
 
-/** 终端等宽价格表（flash / pro 两组）。 */
-function TerminalTable({ period }: { period: PeriodState }): JSX.Element {
+/** 终端等宽余额块（CLI 风格，复用 ttbl 布局）：总余额(DeepSeek) / Go 周·月额度。 */
+function TerminalBalance({
+  deepseek,
+  deepseekError,
+  deepseekStale,
+  deepseekLoading,
+  goQuota,
+  goQuotaError,
+  goQuotaStale,
+  goQuotaLoading,
+}: {
+  deepseek?: DeepseekBalanceData | null
+  deepseekError?: string | null
+  deepseekStale?: boolean
+  deepseekLoading?: boolean
+  goQuota?: GoQuotaUsage | null
+  goQuotaError?: string | null
+  goQuotaStale?: boolean
+  goQuotaLoading?: boolean
+}): JSX.Element {
+  const hasDeepseek = !!deepseek
+  const hasGo = !!goQuota
+  if (!hasDeepseek && !hasGo) {
+    if (deepseekLoading || goQuotaLoading) {
+      return (
+        <div className="ttbl">
+          <div className="tline"><span className="ps">$</span><span className="txt">ds balance</span></div>
+          <div className="tt-row"><span className="m" style={{ color: 'oklch(68% 0.02 240)' }}>· 加载中…</span></div>
+        </div>
+      )
+    }
+    const err = deepseekError || goQuotaError
+    if (err) {
+      return (
+        <div className="ttbl">
+          <div className="tline"><span className="ps">$</span><span className="txt">ds balance</span></div>
+          <div className="tt-row"><span className="m" style={{ color: '#e07a7a' }}>{err}</span></div>
+          <div className="tline"><span className="dim">请在设置页配置 Key 后刷新</span></div>
+        </div>
+      )
+    }
+    return (
+      <div className="ttbl">
+        <div className="tline"><span className="ps">$</span><span className="txt">ds balance</span></div>
+        <div className="tt-row"><span className="m" style={{ color: 'oklch(68% 0.02 240)' }}>暂无数据</span></div>
+      </div>
+    )
+  }
+
+  // DeepSeek 余额按币种返回数组；优先取人民币条目，避免误取 [0] 的 USD/0.00。
+  const entries = deepseek?.balance_infos ?? []
+  const pick = entries.find((b) => b.currency === 'CNY') ?? entries[0] ?? null
+  const stale = deepseekStale || goQuotaStale
   return (
     <div className="ttbl">
-      {MODEL_ORDER.map((model) => (
-        <TerminalGroup key={model} model={model} />
-      ))}
+      <div className="tline"><span className="ps">$</span><span className="txt">ds balance</span></div>
+      <div className="tt-head">
+        <span>项</span>
+        <span>余额</span>
+      </div>
+      {hasDeepseek && (
+        <div className="tt-row">
+          <span className="m">DeepSeek 余额</span>
+          <span className="p"><span className="n" style={{ width: 'auto', color: 'oklch(88% 0.02 150)' }}>{pick ? `${pick.total_balance ?? '--'} ${pick.currency ?? 'CNY'}` : '--'}</span></span>
+        </div>
+      )}
+      {hasGo && (
+        <div className="tt-row">
+          <span className="m">Go 周额度</span>
+          <span className="p"><span className="n" style={{ width: 'auto' }}>{goQuota!.weekly.percent.toFixed(1)}% · {dollars(goQuota!.weekly.percent, GO_LIMITS.weekly)}</span></span>
+        </div>
+      )}
+      {hasGo && (
+        <div className="tt-row">
+          <span className="m">Go 月额度</span>
+          <span className="p"><span className="n" style={{ width: 'auto' }}>{goQuota!.monthly.percent.toFixed(1)}% · {dollars(goQuota!.monthly.percent, GO_LIMITS.monthly)}</span></span>
+        </div>
+      )}
+      {stale && (deepseekError || goQuotaError) && (
+        <div className="tline"><span className="dim" style={{ color: '#c07a5a' }}>缓存值 · {deepseekError ?? goQuotaError}</span></div>
+      )}
+      {hasDeepseek && !deepseek!.is_available && (
+        <div className="tline"><span className="dim">is_available: false</span></div>
+      )}
     </div>
   )
-}
-
-function TerminalGroup({ model }: { model: ModelName }): JSX.Element {
-  return (
-    <>
-      <div className="tt-head">
-        <span>{model === 'V4-Flash' ? 'flash' : 'pro'}</span>
-        <span>idle</span>
-        <span>peak</span>
-      </div>
-      {ITEM_ORDER.map((item) => {
-        const [idle, peak] = PRICE_TABLE[model][item]
-        return (
-          <div className="tt-row" key={item}>
-            <span className="m">{labelOf(item)}</span>
-            <span className="p">
-              <span className="n idle">{formatPrice(idle)}</span>
-              <span className="n peak">{formatPrice(peak)}</span>
-            </span>
-          </div>
-        )
-      })}
-    </>
-  )
-}
-
-function labelOf(item: BillingItem): string {
-  switch (item) {
-    case '输入·缓存命中': return '输入 · 缓存命中'
-    case '输入·缓存未命中': return '输入 · 未命中'
-    case '输出': return '输出'
-  }
 }
 
 /** 终端 · 收起态（光标 + 峰/闲）。 */

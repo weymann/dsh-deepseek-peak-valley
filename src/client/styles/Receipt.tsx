@@ -5,15 +5,23 @@
  * 页脚条形码 .bcode；价格表虚线/点线分隔（CSS 承担）。
  */
 import type { PeriodState } from '../../core/types'
-import { PriceTable, Timeline, Toggle, UnitFooter } from '../components/primitives'
+import { DeepseekBalance, Timeline, Toggle, UsageBar, CountdownFooter } from '../components/primitives'
 import type { CollapsedProps, ExpandedProps } from './classic'
 
-/** 票据 · 展开态。 */
+/** 票据 · 展开态（余额查询替换价格表）。 */
 export function ReceiptExpanded({
   period,
   priceTableExpanded,
   onTogglePriceTable,
   cursorPercent,
+  deepseek,
+  deepseekError,
+  deepseekStale,
+  deepseekLoading,
+  goQuota,
+  goQuotaError,
+  goQuotaStale,
+  goQuotaLoading,
 }: ExpandedProps): JSX.Element {
   return (
     <div className={`w ds-style-03${priceTableExpanded ? '' : ' is-collapsed'}`}>
@@ -26,12 +34,15 @@ export function ReceiptExpanded({
       </div>
       <div className="w-tear" />
       <Timeline period={period} cursorPercent={cursorPercent} />
+      <UsageBar goQuota={goQuota} goQuotaError={goQuotaError} goQuotaStale={goQuotaStale} goQuotaLoading={goQuotaLoading} />
       <Toggle expanded={priceTableExpanded} onToggle={onTogglePriceTable} />
-      {priceTableExpanded && <PriceTable period={period} />}
       {priceTableExpanded && (
-        <UnitFooter>
+        <DeepseekBalance deepseek={deepseek} deepseekError={deepseekError} deepseekStale={deepseekStale} deepseekLoading={deepseekLoading} goQuota={goQuota} goQuotaError={goQuotaError} goQuotaStale={goQuotaStale} goQuotaLoading={goQuotaLoading} />
+      )}
+      {priceTableExpanded && (
+        <CountdownFooter>
           <div className="bcode" />
-        </UnitFooter>
+        </CountdownFooter>
       )}
     </div>
   )

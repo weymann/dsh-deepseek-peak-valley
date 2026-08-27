@@ -9,7 +9,7 @@
  * 对齐 001-测试-验收用例 用例 1：
  *   09:00 / 10:00 / 16:00 → peak；12:00 / 18:00 / 00:00 → idle。
  */
-import { type PeriodState } from './types';
+import { type PeriodState, type TimelineSegment } from './types';
 /** 北京时区标识。 */
 export declare const BEIJING_TIMEZONE: "Asia/Shanghai";
 /** 重导出时段类型（client 侧从本模块一并取用）。 */
@@ -21,14 +21,23 @@ export declare function minutesOf(hhmm: string): number;
  * 用 Intl 按 Asia/Shanghai 归一化，避免依赖本机时区。
  */
 export declare function beijingMinutes(date: Date): number;
+/** 取北京时区周几（0=周日 … 6=周六）。 */
+export declare function beijingWeekday(date?: Date): number;
+/** 是否为周末（周六/周日全天空闲）。 */
+export declare function isWeekend(date?: Date): boolean;
 /**
  * 判定给定时刻（按北京时区）所处的时段。
+ * 周六/周日全天空闲，仅周一到周五按峰时窗口判定。
  * @param date 待判定的时刻；缺省为当前时刻。
  * @returns 'peak' | 'idle'
  */
 export declare function periodAt(date?: Date): PeriodState;
 /** 当前北京时段（便捷函数）。 */
 export declare function currentPeriod(now?: Date): PeriodState;
+/**
+ * 取当前日期对应的时间轴分段（周末全天空闲，仅工作日含高峰段）。
+ */
+export declare function timelineSegmentsAt(date?: Date): readonly TimelineSegment[];
 /**
  * 当前时段光标百分比（001-接口契约 §3：left = 北京当日分钟数 / 1440 × 100%）。
  * 纯函数、按真实时钟实时计算；演示期手动覆盖时段不影响本值。

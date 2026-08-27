@@ -42,6 +42,11 @@
 .ds-pv .tl-meta { margin-top: 6px; font-size: 9.5px; font-family: ui-monospace, 'JetBrains Mono', 'IBM Plex Mono', 'SF Mono', Menlo, monospace; letter-spacing: 0.02em; }
 .ds-pv .w-tl { margin-top: 10px; }
 
+/* Go 模型近 5 小时用量进度条（与 Timeline 同构，但无高峰/空闲分段标记）。
+   .tl-fill 为纯色用量填充（语义强调色 --now，不写死），.tl-cur 落在用量百分比处。 */
+.ds-pv .tl-fill { display: block; flex: none; height: 100%; background: var(--now); border-radius: inherit; transition: width .3s ease; }
+.ds-pv .w-usage { margin-top: 8px; }
+
 .ds-pv .wt { width: 100%; border-collapse: collapse; table-layout: fixed; margin-top: 9px; }
 .ds-pv .wt th, .ds-pv .wt td { font-size: 11px; line-height: 1.4; padding: 4px 2px; text-align: left; }
 .ds-pv .wt td:nth-child(2), .ds-pv .wt td:nth-child(3), .ds-pv .wt th:nth-child(2), .ds-pv .wt th:nth-child(3) { width: 46px; text-align: right; }
@@ -241,6 +246,7 @@
   content: ""; position: absolute; left: 0; right: 0; top: 4px; height: 4px; border-radius: 2px;
   background: linear-gradient(90deg, var(--idle) 0 37.5%, var(--peak) 37.5% 50%, var(--idle) 50% 58.34%, var(--peak) 58.34% 75%, var(--idle) 75% 100%);
 }
+.ds-style-04[data-weekend="1"] .line::before { background: var(--idle); }
 .ds-style-04 .sta {
   position: absolute; top: 1.5px; width: 9px; height: 9px; margin-left: -4.5px; border-radius: 50%;
   background: oklch(100% 0 0); border: 2.5px solid oklch(60% 0.03 240);
@@ -272,6 +278,7 @@
   width: 16px; height: 44px; border-radius: 3px; position: relative;
   background: linear-gradient(180deg, var(--idle) 0 37.5%, var(--peak) 37.5% 50%, var(--idle) 50% 58.34%, var(--peak) 58.34% 75%, var(--idle) 75% 100%);
 }
+.ds-collapsed-04[data-weekend="1"] .mini { background: var(--idle); }
 .ds-collapsed-04 .train {
   /* top 由 inline style 按实时时钟接管（cursorPercentAt）；此处不写死。 */
   position: absolute; left: 50%; margin-left: -4px; width: 8px; height: 8px; border-radius: 50%;
@@ -737,6 +744,9 @@
 .ds-style-11 .ai-tile--in { background: var(--ai-mint-pale); color: var(--ai-teal-ink); }
 .ds-style-11 .ai-tile--out { background: var(--ai-blue-pale); color: var(--ai-blue-ink); }
 .ds-style-11 .ai-tile--rate { background: var(--ai-green-pale, color-mix(in oklch, var(--ac-green) 18%, oklch(100% 0 0))); color: var(--ai-teal-ink); }
+.ds-style-11 .ai-tile--5h { background: var(--ai-mint-pale); color: var(--ai-teal-ink); }
+.ds-style-11 .ai-tile--week { background: var(--ai-blue-pale); color: var(--ai-blue-ink); }
+.ds-style-11 .ai-tile--month { background: var(--ai-yellow-pale); color: var(--ai-amber-ink); }
 .ds-style-11 .ai-detail-inner { margin-top: 6px; }
 .ds-style-11 .ai-d-row { display: flex; justify-content: space-between; align-items: baseline; font-size: 10px; padding: 3px 2px; }
 .ds-style-11 .ai-d-row + .ai-d-row { border-top: 2px dashed var(--ac-outline-soft); }

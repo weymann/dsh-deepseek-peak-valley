@@ -7,15 +7,24 @@
  */
 import type { PeriodState } from '../../core/types'
 import { MoonIcon, SunIcon } from '../components/icons'
-import { PriceTable, Timeline, Toggle, UnitFooter } from '../components/primitives'
+import { DeepseekBalance, Timeline, Toggle, UsageBar, CountdownFooter } from '../components/primitives'
+import { isWeekend } from '../../core/period'
 import type { CollapsedProps, ExpandedProps } from './classic'
 
-/** 昼夜 · 展开态。 */
+/** 昼夜 · 展开态（余额查询替换价格表）。 */
 export function DayNightExpanded({
   period,
   priceTableExpanded,
   onTogglePriceTable,
   cursorPercent,
+  deepseek,
+  deepseekError,
+  deepseekStale,
+  deepseekLoading,
+  goQuota,
+  goQuotaError,
+  goQuotaStale,
+  goQuotaLoading,
 }: ExpandedProps): JSX.Element {
   const day = period === 'peak'
   return (
@@ -26,11 +35,14 @@ export function DayNightExpanded({
         </span>
         <span className="w-now">{day ? '高峰时段' : '空闲时段'}</span>
       </div>
-      <div className="w-sub">北京时间 · 高峰 09:00–12:00 / 14:00–18:00</div>
+      <div className="w-sub">北京时间 · {isWeekend(new Date()) ? '周末全天空闲｜低谷' : '高峰 09:00–12:00 / 14:00–18:00'}</div>
       <Timeline period={period} meta="暖色段 = 高峰　冷色段 = 空闲" cursorPercent={cursorPercent} />
+      <UsageBar goQuota={goQuota} goQuotaError={goQuotaError} goQuotaStale={goQuotaStale} goQuotaLoading={goQuotaLoading} />
       <Toggle expanded={priceTableExpanded} onToggle={onTogglePriceTable} />
-      {priceTableExpanded && <PriceTable period={period} />}
-      {priceTableExpanded && <UnitFooter note="元 / 百万 tokens · 高峰 = 空闲 × 2" />}
+      {priceTableExpanded && (
+        <DeepseekBalance deepseek={deepseek} deepseekError={deepseekError} deepseekStale={deepseekStale} deepseekLoading={deepseekLoading} goQuota={goQuota} goQuotaError={goQuotaError} goQuotaStale={goQuotaStale} goQuotaLoading={goQuotaLoading} />
+      )}
+      {priceTableExpanded && <CountdownFooter />}
     </div>
   )
 }

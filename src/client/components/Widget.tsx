@@ -23,6 +23,8 @@ import {
 import { usePeriod } from '../state/period'
 import { usePreferences } from '../state/preferences'
 import { useUsage } from '../state/usage'
+import { useGoQuota } from '../state/go-quota'
+import { useDeepseekBalance } from '../state/deepseek-balance'
 import { styleComponents, dualViewComponents } from '../styles/registry'
 
 /** `sidebar.footer.action` 全量 props：owner 共享 `{ wide }` + 全局标准套件。 */
@@ -34,6 +36,8 @@ export function PeakValleyWidget(props: PeakValleyWidgetProps): JSX.Element | nu
   const preferences = usePreferences()
   const { period, cursorPercent } = usePeriod()
   const usageState = useUsage()
+  const goQuotaState = useGoQuota()
+  const deepseekState = useDeepseekBalance()
   const sessionId: SessionId | undefined = props.useSessions((state) => state.current)
   const dual = useSessionDualState(sessionId)
   const components = styleComponents(preferences.styleId)
@@ -64,6 +68,13 @@ export function PeakValleyWidget(props: PeakValleyWidgetProps): JSX.Element | nu
             }}
             usage={usageState.usage}
             usageReal={usageState.real}
+            goQuota={goQuotaState.usage}
+            goQuotaError={goQuotaState.error}
+            goQuotaStale={goQuotaState.stale}
+            deepseek={deepseekState.data}
+            deepseekError={deepseekState.error}
+            deepseekStale={deepseekState.stale}
+            deepseekLoading={deepseekState.loading}
           />
         ) : (
           <components.Expanded
@@ -73,8 +84,18 @@ export function PeakValleyWidget(props: PeakValleyWidgetProps): JSX.Element | nu
             onTogglePriceTable={() => {
               if (sessionId !== undefined) {
                 setPriceTableExpanded(sessionId, !dual.priceTableExpanded)
+              } else {
+                setPriceTableExpanded(undefined, !dual.priceTableExpanded)
               }
             }}
+            deepseek={deepseekState.data}
+            deepseekError={deepseekState.error}
+            deepseekStale={deepseekState.stale}
+            deepseekLoading={deepseekState.loading}
+            goQuota={goQuotaState.usage}
+            goQuotaError={goQuotaState.error}
+            goQuotaStale={goQuotaState.stale}
+            goQuotaLoading={goQuotaState.loading}
           />
         )
       ) : (
@@ -83,6 +104,7 @@ export function PeakValleyWidget(props: PeakValleyWidgetProps): JSX.Element | nu
             period={period}
             cursorPercent={cursorPercent}
             viewTab={dual.viewTab}
+            goQuota={goQuotaState.usage}
           />
         ) : (
           <components.Collapsed period={period} cursorPercent={cursorPercent} />

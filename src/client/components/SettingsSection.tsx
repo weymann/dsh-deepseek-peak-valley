@@ -6,7 +6,7 @@
  * 写路径走本插件偏好 store（`settings.section` 的 owner props 只给 `{ close }`，
  * 文案/当前值/写路径由本插件自持）。
  */
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
 import type {} from '@deepseek-ai/dsh-client-runtime/client'
@@ -15,6 +15,8 @@ import type { ViewTab } from '../../core/types'
 import { setPeriodOverride, usePeriod } from '../state/period'
 import { setPreferences, usePreferences } from '../state/preferences'
 import { useUsage } from '../state/usage'
+import { useGoQuota } from '../state/go-quota'
+import { useDeepseekBalance, refreshDeepseek } from '../state/deepseek-balance'
 import { styleComponents, dualViewComponents } from '../styles/registry'
 
 /** `settings.section` 全量 props：owner 共享 `{ close }` + 全局标准套件。 */
@@ -25,11 +27,25 @@ export function SettingsSection(_props: SettingsSectionProps): JSX.Element {
   const preferences = usePreferences()
   const { period, cursorPercent } = usePeriod()
   const usageState = useUsage()
+  const goQuotaState = useGoQuota()
+  const deepseekState = useDeepseekBalance()
   const components = styleComponents(preferences.styleId)
   const dualComp = isDualViewStyle(preferences.styleId) ? dualViewComponents(preferences.styleId) : null
   const [previewExpanded, setPreviewExpanded] = useState(true)
   const [previewViewTab, setPreviewViewTab] = useState<ViewTab>('pricing')
   const [previewUsageDetail, setPreviewUsageDetail] = useState(true)
+  const [goKeyInput, setGoKeyInput] = useState('')
+  const [dsKeyInput, setDsKeyInput] = useState('')
+  const [cfgStatus, setCfgStatus] = useState<{ goKeyMasked?: string; deepseekKeyMasked?: string; goKeyConfigured?: boolean; deepseekKeyConfigured?: boolean } | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [saveMsg, setSaveMsg] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetch('/go-quota/config', { cache: 'no-store' } as any)
+      .then((r) => r.json())
+      .then((j) => setCfgStatus(j))
+      .catch(() => {})
+  }, [])
 
   return (
     <div className="ds-pv-settings">
@@ -80,6 +96,104 @@ export function SettingsSection(_props: SettingsSectionProps): JSX.Element {
         </div>
       </div>
 
+      {/* Key 配置：Go 套餐 & DeepSeek */}
+      <fieldset className="ds-pv-fieldset">
+        <legend>Key 配置 · Go套餐 & DeepSeek</legend>
+        <p className="hint" style={{ margin: '0 0 8px', lineHeight: 1.6 }}>
+          用于填充 <b>Go套餐用量</b>（三贴纸）与 <b>余额查询</b>（DeepSeek 余额）。留空表示使用系统已配置（`auth.json` / 环境变量）。保存后立即生效，Key 仅存于 `~/.dsh/dsh-deepseek-peak-valley.json`。
+          {cfgStatus && (
+            <span style={{ display: 'block', marginTop: 4 }}>
+              Go: {cfgStatus.goKeyConfigured ? cfgStatus.goKeyMasked : '未配置'} · DeepSeek: {cfgStatus.deepseekKeyConfigured ? cfgStatus.deepseekKeyMasked : '未配置'}
+              {goQuotaState.error && <span style={{ color: '#a33' }}> · Go错误:{goQuotaState.error.slice(0, 40)}</span>}
+              {deepseekState.error && <span style={{ color: '#a33' }}> · DS错误:{deepseekState.error.slice(0, 40)}</span>}
+            </span>
+          )}
+        </p>
+        <div style={{ display: 'grid', gap: 8 }}>
+          <label style={{ display: 'grid', gap: 4 }}>
+            <span style={{ fontSize: 12, fontWeight: 600 }}>Go 套餐 Key（opencode-go）</span>
+            <input
+              type="password"
+              placeholder={cfgStatus?.goKeyMasked || 'sk-... 粘贴后保存'}
+              value={goKeyInput}
+              onChange={(e) => setGoKeyInput(e.target.value)}
+              style={{ padding: '6px 10px', border: '1px solid var(--dsw-alias-border-l1)', borderRadius: 6, fontSize: 12 }}
+            />
+          </label>
+          <label style={{ display: 'grid', gap: 4 }}>
+            <span style={{ fontSize: 12, fontWeight: 600 }}>DeepSeek Key（platform.deepseek.com）</span>
+            <input
+              type="password"
+              placeholder={cfgStatus?.deepseekKeyMasked || 'sk-... 粘贴后保存'}
+              value={dsKeyInput}
+              onChange={(e) => setDsKeyInput(e.target.value)}
+              style={{ padding: '6px 10px', border: '1px solid var(--dsw-alias-border-l1)', borderRadius: 6, fontSize: 12 }}
+            />
+          </label>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <button
+              type="button"
+              disabled={saving}
+              onClick={async () => {
+                setSaving(true)
+                setSaveMsg(null)
+                try {
+                  const body: any = {}
+                  if (goKeyInput.trim()) body.goKey = goKeyInput.trim()
+                  else if (goKeyInput === '') {
+                    // 不传则不改；清空需用户显式清空后保存？这里仅当有输入才更新
+                  }
+                  if (dsKeyInput.trim()) body.deepseekKey = dsKeyInput.trim()
+                  // 允许清空：若输入框为空且用户点击清空，可传空字符串
+                  // 这里如果用户输入为空字符串且想清空，可通过单独逻辑；暂仅更新非空
+                  if (Object.keys(body).length === 0) {
+                    setSaveMsg('未输入新 Key')
+                    return
+                  }
+                  const r = await fetch('/go-quota/config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } as any)
+                  const j: any = await r.json()
+                  if (!j.ok && j.error) throw new Error(j.error)
+                  setCfgStatus((prev) => ({ ...prev, goKeyMasked: j.goKeyMasked ?? prev?.goKeyMasked, deepseekKeyMasked: j.deepseekKeyMasked ?? prev?.deepseekKeyMasked, goKeyConfigured: !!j.goKeyMasked, deepseekKeyConfigured: !!j.deepseekKeyMasked }))
+                  setSaveMsg('已保存，正在刷新数据…')
+                  setGoKeyInput('')
+                  setDsKeyInput('')
+                  // 触发重新轮询（下一次 60s 前先手动刷新）
+                  setTimeout(() => {
+                    fetch('/go-quota/usage', { cache: 'no-store' } as any).catch(() => {})
+                    fetch('/deepseek/balance', { cache: 'no-store' } as any).catch(() => {})
+                    refreshDeepseek()
+                  }, 300)
+                } catch (e: any) {
+                  setSaveMsg(e?.message ?? String(e))
+                } finally {
+                  setSaving(false)
+                  setTimeout(() => setSaveMsg(null), 3000)
+                }
+              }}
+              style={{ padding: '6px 14px', borderRadius: 6, border: '1px solid var(--dsw-alias-border-l1)', background: 'var(--dsw-alias-bg-layer-2)', cursor: 'pointer', fontSize: 12 }}
+            >
+              {saving ? '保存中…' : '保存 Keys'}
+            </button>
+            <button
+              type="button"
+              onClick={async () => {
+                // 清空
+                if (!confirm('清空已保存的 Keys？')) return
+                const r = await fetch('/go-quota/config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ goKey: '', deepseekKey: '' }) } as any)
+                const j: any = await r.json()
+                setCfgStatus({ goKeyConfigured: false, deepseekKeyConfigured: false, goKeyMasked: '', deepseekKeyMasked: '' })
+                setSaveMsg('已清空')
+                setTimeout(() => setSaveMsg(null), 2000)
+              }}
+              style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid var(--dsw-alias-border-l1)', background: 'transparent', cursor: 'pointer', fontSize: 12 }}
+            >
+              清空
+            </button>
+            {saveMsg && <span style={{ fontSize: 12, color: saveMsg.includes('已') ? '#1a7' : '#a33' }}>{saveMsg}</span>}
+          </div>
+        </div>
+      </fieldset>
+
       {/* 风格选择 */}
       <fieldset className="ds-pv-fieldset">
         <legend>风格 · 11 款</legend>
@@ -114,6 +228,13 @@ export function SettingsSection(_props: SettingsSectionProps): JSX.Element {
                   onToggleUsageDetail={() => setPreviewUsageDetail((v) => !v)}
                   usage={usageState.usage}
                   usageReal={usageState.real}
+                  goQuota={goQuotaState.usage}
+                  goQuotaError={goQuotaState.error}
+                  goQuotaStale={goQuotaState.stale}
+                  deepseek={deepseekState.data}
+                  deepseekError={deepseekState.error}
+                  deepseekStale={deepseekState.stale}
+                  deepseekLoading={deepseekState.loading}
                 />
               ) : (
                 <components.Expanded

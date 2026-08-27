@@ -18,6 +18,9 @@ import { PeakValleyWidget } from './components/Widget'
 import { resetDualStateBuckets } from './state/dual-state'
 import { startPeriodTimer } from './state/period'
 import { startUsageBridge } from './state/usage'
+import { startGoQuotaPolling } from './state/go-quota'
+import { startDeepseekPolling } from './state/deepseek-balance'
+import { startCountdown } from './state/countdown'
 import { installStyles } from './styles/inject'
 
 /** 必需服务：slot 注册表 + sessions（当前会话用量桥接读取 token-meter 投影）。 */
@@ -36,6 +39,15 @@ export function apply(ctx: ClientContext): void {
 
   // 真实用量桥接（token-meter 投影 → 本插件 store）随 fiber dispose 解除
   ctx.effect(() => startUsageBridge(ctx), 'dsh-deepseek-peak-valley: usage bridge')
+
+  // Go 套餐用量轮询（ /go-quota/usage → 三贴纸真实填充）
+  ctx.effect(() => startGoQuotaPolling(), 'dsh-deepseek-peak-valley: go-quota polling')
+
+  // DeepSeek 余额轮询（ /deepseek/balance → 余额查询面板）
+  ctx.effect(() => startDeepseekPolling(), 'dsh-deepseek-peak-valley: deepseek polling')
+
+  // 刷新倒计时（每秒递减，归零触发一次主动刷新并重计）
+  ctx.effect(() => startCountdown(), 'dsh-deepseek-peak-valley: refresh countdown')
 
   // per-session 双态分桶在 fiber dispose 时清空
   ctx.effect(

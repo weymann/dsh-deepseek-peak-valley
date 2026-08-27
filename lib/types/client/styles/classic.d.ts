@@ -6,6 +6,8 @@
  */
 import type { ReactNode } from 'react';
 import type { PeriodState } from '../../core/types';
+import type { DeepseekBalanceData } from '../state/deepseek-balance';
+import type { GoQuotaUsage } from '../state/go-quota';
 /** 展开态通用 props（纯展示；DualState 由上层 Widget 注入）。 */
 export interface ExpandedProps {
     period: PeriodState;
@@ -15,6 +17,16 @@ export interface ExpandedProps {
     onTogglePriceTable: () => void;
     /** 时间轴光标百分比（0–100，按当前北京时间实时计算）。 */
     cursorPercent: number;
+    /** DeepSeek 余额（余额查询面板替换价格表）。 */
+    deepseek?: DeepseekBalanceData | null;
+    deepseekError?: string | null;
+    deepseekStale?: boolean;
+    deepseekLoading?: boolean;
+    /** Go 套餐用量（近 5 小时用量进度条）。 */
+    goQuota?: GoQuotaUsage | null;
+    goQuotaError?: string | null;
+    goQuotaStale?: boolean;
+    goQuotaLoading?: boolean;
 }
 /** 收起态通用 props。 */
 export interface CollapsedProps {
@@ -27,7 +39,7 @@ export interface CollapsedProps {
  * @param styleClass 风格类名（如 ds-style-01）。
  * @param meta 时间轴元信息（默认 001 标准文案）。
  */
-export declare function ClassicExpanded({ styleClass, period, priceTableExpanded, onTogglePriceTable, cursorPercent, meta, footer, badge, name, }: {
+export declare function ClassicExpanded({ styleClass, period, priceTableExpanded, onTogglePriceTable, cursorPercent, meta, footer, badge, name, deepseek, deepseekError, deepseekStale, deepseekLoading, goQuota, goQuotaError, goQuotaStale, goQuotaLoading, }: {
     styleClass: string;
     period: PeriodState;
     priceTableExpanded: boolean;
@@ -37,6 +49,14 @@ export declare function ClassicExpanded({ styleClass, period, priceTableExpanded
     footer?: ReactNode;
     badge?: ReactNode;
     name?: string;
+    deepseek?: DeepseekBalanceData | null;
+    deepseekError?: string | null;
+    deepseekStale?: boolean;
+    deepseekLoading?: boolean;
+    goQuota?: GoQuotaUsage | null;
+    goQuotaError?: string | null;
+    goQuotaStale?: boolean;
+    goQuotaLoading?: boolean;
 }): JSX.Element;
 /** 经典收起态：圆点 + 峰/闲 文字（01/02/03/08 共用结构）。 */
 export declare function DotCollapsed({ styleClass, period }: CollapsedProps & {
