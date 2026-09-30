@@ -1,61 +1,81 @@
-# DeepSeek 分时段计费 & Go 套餐用量 小组件
+# DeepSeek Peak & Off-Peak Pricing + Go Plan Usage Widget
 
-**v0.2.0** · 一个 DSH Web 侧边栏小插件
+**v0.2.0** · A DSH Web sidebar plugin
 
 [![dsh-plugin](https://img.shields.io/badge/dsh-plugin-4C8BF5?logo=deepseek)](#) [![DSH rc.8](https://img.shields.io/badge/DSH-rc.8-1F6FEB?logo=deepseek)](#) [![license MIT](https://img.shields.io/badge/license-MIT-green)](#)
 
-## 一句话说明
+## In one sentence
 
-装在 DSH Web 左侧边栏里，随时帮你盯着两件事：**DeepSeek 现在是高价还是低价时段**，以及 **Go 套餐额度用了多少**。
+It lives in the DSH Web left sidebar and keeps an eye on two things for you: **whether DeepSeek is currently in a peak or off-peak window**, and **how much of your Go plan quota you have used**.
 
-## 它能做什么
+## What it does
 
-- **自动判断时段**：按北京时间，自动识别「高峰」（09:00–12:00、14:00–18:00）和「空闲」，高峰价 = 空闲价 × 2。
-- **常驻侧边栏**：不用开网页，左侧栏就能看到报价和时段，点开还能看详情。
-- **11 款皮肤**：深色科技、极简、票据、地铁线路、终端……挑一个顺眼的。
-- **Go 套餐额度**：直接显示 Go 模型近 5 小时、本周、本月的用量。
+- **Detects the window automatically**: in Beijing time it recognises peak (09:00–12:00, 14:00–18:00) and off-peak windows; the peak rate is 2× the off-peak rate.
+- **Always in the sidebar**: rates and the current window are visible in the left bar without opening a page, and the details expand in place.
+- **11 skins**: dark tech, minimal, receipt, metro line, terminal, and more — pick whichever you like.
+- **Go plan quota**: shows the Go model's usage over the last 5 hours, this week, and this month.
+- **Follows your language**: all copy comes from the official DSH locale layer, so it switches with **Settings → General → Language** (English and Chinese dictionaries are both shipped).
 
-> 价格基于公开报价的界面演示（DeepSeek V4，元 / 百万 tokens），正式接入以官方实时接口为准。
+> Prices are a UI demonstration based on published rates (DeepSeek V4, CNY / million tokens). Live figures depend on the official real-time API.
 
-## 最新更新（v0.2.0）
+## What's new (v0.2.0)
 
-1. **新增「Go 5 小时用量」进度条**（1–10 号皮肤）：在时间轴下面多了一条**没有高峰/空闲标记的纯进度条**，专门展示 Go 模型近 5 小时的用量百分比。
-2. **余额查询面板翻新**：
-   - 去掉了「赠送 / 充值 / 可用」三行（平时基本用不上）；
-   - 换成 **Go 周额度、Go 月额度**（带百分比和金额）；
-   - 底部不再是固定文字，而是**真的 60 秒倒计时**——数到 0 自动刷新一次数据，然后重新计时。
-3. **修好了人民币余额**：之前会显示成 `0.00 USD`（误取了账号里的美元那条），现在能**正确显示你的人民币余额**，例如 `90.xx CNY`。
-4. 标题从「DeepSeek 计费」改成「**DeepSeek & Go**」。
+1. **New "Go 5h usage" bar** (skins 1–10): a **plain progress bar with no peak/off-peak markers** below the timeline, dedicated to the Go model's usage percentage over the last 5 hours.
+2. **Rebuilt balance panel**:
+   - the old "Granted / Topped up / Available" trio is gone (rarely useful day to day);
+   - replaced by **Go weekly quota** and **Go monthly quota** (with percentages and amounts);
+   - the footer is no longer static text but a **real 60-second countdown** — on reaching zero it refreshes the data once and starts over.
+3. **Fixed the CNY balance**: it used to render as `0.00 USD` (it picked the wrong account entry). It now shows **your actual CNY balance**, e.g. `90.xx CNY`.
+4. The title changed from "DeepSeek pricing" to **"DeepSeek & Go"**.
 
-> 说明：11 号皮肤（无人岛）是双视图设计，自带 Go 额度三贴纸，不走上面 1–10 的进度条改动。
+> Note: skin 11 (Animal Island) is a dual-view design with its own three Go-quota stickers; it does not use the 1–10 progress-bar change above.
 
-## 十一款皮肤
+## Eleven skins
 
-每款都包含**展开态**和**收起态**两种样子（真实运行截图）：
+Each skin has both an **expanded** and a **collapsed** form (real screenshots):
 
 | | | | | | |
 |---|---|---|---|---|---|
-| **01 · 脉冲 Pulse** | **02 · 留白 Minimal** | **03 · 票据 Receipt** | **04 · 时刻线 Metro** | **05 · 胶囊 Pills** | **06 · 终端 Terminal** |
+| **01 · Pulse** | **02 · Minimal** | **03 · Receipt** | **04 · Metro** | **05 · Pills** | **06 · Terminal** |
 | ![01](assets/styles/style-01.png) | ![02](assets/styles/style-02.png) | ![03](assets/styles/style-03.png) | ![04](assets/styles/style-04.png) | ![05](assets/styles/style-05.png) | ![06](assets/styles/style-06.png) |
-| **07 · 粗野 Brutalist** | **08 · 玻璃 Glass** | **09 · 昼夜 DayNight** | **10 · 编辑 Editorial** | **11 · 无人岛 Animal Island** | |
+| **07 · Brutalist** | **08 · Glass** | **09 · DayNight** | **10 · Editorial** | **11 · Animal Island** | |
 | ![07](assets/styles/style-07.png) | ![08](assets/styles/style-08.png) | ![09](assets/styles/style-09.png) | ![10](assets/styles/style-10.png) | ![11](assets/styles/style-11.png) | |
 
-想切换着看每种皮肤的高峰/空闲样子？直接用浏览器打开设计稿：
-[`deepseek-pricing-widget-styles.html`](deepseek-pricing-widget-styles.html)（右上角可切模拟时段）；
-双视图设计稿：[`animal-island-widgets-v2.html`](animal-island-widgets-v2.html)。
+Want to flip through each skin's peak/off-peak appearance? Open the design sheet directly in a browser:
+[`deepseek-pricing-widget-styles.html`](deepseek-pricing-widget-styles.html) (the simulated window can be switched in the top-right corner);
+dual-view design sheet: [`animal-island-widgets-v2.html`](animal-island-widgets-v2.html).
 
-## 怎么安装
+## Installation
 
 ```sh
 dsh plugin --profile web add /path/to/dsh-deepseek-peak-valley
 ```
 
-装完重启一下 dsh web 即可。
+Restart `dsh web` afterwards.
 
-## 兼容性
+## Language
 
-- 目标：**DSH Web · rc.8**
-- 出现位置：左侧栏左下角（设置按钮上方）+ 设置页「DS峰谷小组件」（启停、换皮肤）
+The plugin registers its own namespace (`dsh-deepseek-peak-valley`) with the official
+[`@deepseek-ai/dsh-client-locale`](https://www.npmjs.com/package/@deepseek-ai/dsh-client-locale) service
+and takes the framework-synthesised `t` seat on both of
+its slots. There is nothing to configure per plugin: copying follows the global
+**Settings → General → Language** choice, and switching it updates the sidebar widget, the settings page,
+and the host error messages immediately.
+
+Chinese and English dictionaries are both shipped, and the typed registration makes them
+compile-checked against one key union — a missing or extra key fails the build.
+
+## Keys
+
+The settings page takes an optional OpenCode Go key and DeepSeek key. They are used to fill the
+Go-quota stickers and the balance panel; leave them blank to fall back to what the system already has
+(`auth.json` or environment variables). Saved keys live only in
+`~/.dsh/dsh-deepseek-peak-valley.json`.
+
+## Compatibility
+
+- Target: **DSH Web · rc.8**
+- Appears in: bottom-left of the left sidebar (above the settings button) + a "DeepSeek Peak & Off-Peak" page under Settings (enable/disable, skin switching)
 
 ## License
 

@@ -9,8 +9,14 @@
  * - 关闭时（设置里启停开关）返回 null。
  * - 双视图风格（Animal Island）额外注入 viewTab / usageDetail 状态。
  */
-import type { PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots';
-/** `sidebar.footer.action` 全量 props：owner 共享 `{ wide }` + 全局标准套件。 */
-export type PeakValleyWidgetProps = PropsRuntime<'sidebar.footer.action'>;
+import type { PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots';
+import { LOCALE_NS } from '../locale';
+/**
+ * `sidebar.footer.action` 全量 props：owner 共享 `{ wide }` + 全局标准套件
+ * + slot 注册声明的 `locale:` 座位（框架合成的 `t`）。
+ * `PropsLocale` 与 `PropsRuntime` 的并集正是框架在 register 调用点对组件
+ * 施加的 composed props 约束（`ComposedProps` = PropsRuntime & … & PropsLocale）。
+ */
+export type PeakValleyWidgetProps = PropsRuntime<'sidebar.footer.action'> & PropsLocale<typeof LOCALE_NS>;
 /** 侧边栏小组件入口组件。 */
 export declare function PeakValleyWidget(props: PeakValleyWidgetProps): JSX.Element | null;

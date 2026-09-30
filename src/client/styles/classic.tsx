@@ -10,6 +10,7 @@ import { Badge, DeepseekBalance, PeriodWord, Timeline, Toggle, UsageBar, Countdo
 import type { DeepseekBalanceData } from '../state/deepseek-balance'
 import type { GoQuotaUsage } from '../state/go-quota'
 import { isWeekend } from '../../core/period'
+import { useT } from '../locale/translator'
 
 /** 展开态通用 props（纯展示；DualState 由上层 Widget 注入）。 */
 export interface ExpandedProps {
@@ -52,8 +53,8 @@ export function ClassicExpanded({
   cursorPercent,
   meta,
   footer,
-  badge = <Badge period={period} />,
-  name = 'DeepSeek & Go',
+  badge,
+  name,
   deepseek,
   deepseekError,
   deepseekStale,
@@ -81,13 +82,14 @@ export function ClassicExpanded({
   goQuotaStale?: boolean
   goQuotaLoading?: boolean
 }): JSX.Element {
+  const t = useT()
   const weekend = isWeekend(new Date())
-  const effectiveMeta = meta ?? (weekend ? '周末全天空闲｜低谷' : '高峰 09:00–12:00 · 14:00–18:00｜其余空闲')
+  const effectiveMeta = meta ?? (weekend ? t('period.weekend') : t('period.rule'))
   return (
     <div className={`w ${styleClass}${priceTableExpanded ? '' : ' is-collapsed'}`}>
       <div className="w-head">
-        <span className="w-name">{name}</span>
-        {badge}
+        <span className="w-name">{name ?? t('skin.name')}</span>
+        {badge ?? <Badge period={period} />}
       </div>
       <Timeline period={period} meta={effectiveMeta} cursorPercent={cursorPercent} />
       <UsageBar goQuota={goQuota} goQuotaError={goQuotaError} goQuotaStale={goQuotaStale} goQuotaLoading={goQuotaLoading} />

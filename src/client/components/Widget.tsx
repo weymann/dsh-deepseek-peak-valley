@@ -9,11 +9,13 @@
  * - 关闭时（设置里启停开关）返回 null。
  * - 双视图风格（Animal Island）额外注入 viewTab / usageDetail 状态。
  */
-import type { PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
+import type { PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
 import type {} from '@deepseek-ai/dsh-client-runtime/client'
 import type { SessionId } from '@deepseek-ai/dsh-client-runtime/client'
 import { isDualViewStyle } from '../../core/catalog'
+import type { PeriodState } from '../../core/types'
+import { LOCALE_NS } from '../locale'
 import {
   useSessionDualState,
   setPriceTableExpanded,
@@ -26,13 +28,19 @@ import { useUsage } from '../state/usage'
 import { useGoQuota } from '../state/go-quota'
 import { useDeepseekBalance } from '../state/deepseek-balance'
 import { styleComponents, dualViewComponents } from '../styles/registry'
+import { TranslatorProvider, useHostError } from '../locale/translator'
 
-/** `sidebar.footer.action` 全量 props：owner 共享 `{ wide }` + 全局标准套件。 */
-export type PeakValleyWidgetProps = PropsRuntime<'sidebar.footer.action'>
+/**
+ * `sidebar.footer.action` 全量 props：owner 共享 `{ wide }` + 全局标准套件
+ * + slot 注册声明的 `locale:` 座位（框架合成的 `t`）。
+ * `PropsLocale` 与 `PropsRuntime` 的并集正是框架在 register 调用点对组件
+ * 施加的 composed props 约束（`ComposedProps` = PropsRuntime & … & PropsLocale）。
+ */
+export type PeakValleyWidgetProps = PropsRuntime<'sidebar.footer.action'> & PropsLocale<typeof LOCALE_NS>
 
 /** 侧边栏小组件入口组件。 */
 export function PeakValleyWidget(props: PeakValleyWidgetProps): JSX.Element | null {
-  const { wide } = props
+  const { wide, t } = props
   const preferences = usePreferences()
   const { period, cursorPercent } = usePeriod()
   const usageState = useUsage()
@@ -48,7 +56,59 @@ export function PeakValleyWidget(props: PeakValleyWidgetProps): JSX.Element | nu
   const dualComp = isDual ? dualViewComponents(preferences.styleId) : null
 
   return (
-    <div className="ds-pv" data-period={period} data-tab={dual.viewTab} role="group" aria-label="DeepSeek 分时段计费小组件">
+    <TranslatorProvider t={t}>
+      <PeakValleyBody
+        wide={wide}
+        t={t}
+        period={period}
+        cursorPercent={cursorPercent}
+        sessionId={sessionId}
+        dual={dual}
+        components={components}
+        dualComp={dualComp}
+        usageState={usageState}
+        goQuotaState={goQuotaState}
+        deepseekState={deepseekState}
+      />
+    </TranslatorProvider>
+  )
+}
+
+/**
+ * 组件树主体：Provider 之内，因此可以安全地把宿主错误码翻译成当前语言。
+ * 拆成独立组件是为了让 `useHostError`（依赖 context）位于 Provider 内部。
+ */
+function PeakValleyBody({
+  wide,
+  t,
+  period,
+  cursorPercent,
+  sessionId,
+  dual,
+  components,
+  dualComp,
+  usageState,
+  goQuotaState,
+  deepseekState,
+}: {
+  wide: boolean
+  t: PeakValleyWidgetProps['t']
+  period: PeriodState
+  cursorPercent: number
+  sessionId: SessionId | undefined
+  dual: ReturnType<typeof useSessionDualState>
+  components: ReturnType<typeof styleComponents>
+  dualComp: ReturnType<typeof dualViewComponents>
+  usageState: ReturnType<typeof useUsage>
+  goQuotaState: ReturnType<typeof useGoQuota>
+  deepseekState: ReturnType<typeof useDeepseekBalance>
+}): JSX.Element {
+  // 宿主错误在进入组件树时一次性本地化；原始码/原文仍留在 store 中
+  const goQuotaError = useHostError(goQuotaState.errorCode, goQuotaState.error)
+  const deepseekError = useHostError(deepseekState.errorCode, deepseekState.error)
+
+  return (
+    <div className="ds-pv" data-period={period} data-tab={dual.viewTab} role="group" aria-label={t('plugin.aria')}>
       {wide ? (
         dualComp ? (
           <dualComp.DualExpanded
@@ -69,10 +129,10 @@ export function PeakValleyWidget(props: PeakValleyWidgetProps): JSX.Element | nu
             usage={usageState.usage}
             usageReal={usageState.real}
             goQuota={goQuotaState.usage}
-            goQuotaError={goQuotaState.error}
+            goQuotaError={goQuotaError}
             goQuotaStale={goQuotaState.stale}
             deepseek={deepseekState.data}
-            deepseekError={deepseekState.error}
+            deepseekError={deepseekError}
             deepseekStale={deepseekState.stale}
             deepseekLoading={deepseekState.loading}
           />
@@ -89,26 +149,24 @@ export function PeakValleyWidget(props: PeakValleyWidgetProps): JSX.Element | nu
               }
             }}
             deepseek={deepseekState.data}
-            deepseekError={deepseekState.error}
+            deepseekError={deepseekError}
             deepseekStale={deepseekState.stale}
             deepseekLoading={deepseekState.loading}
             goQuota={goQuotaState.usage}
-            goQuotaError={goQuotaState.error}
+            goQuotaError={goQuotaError}
             goQuotaStale={goQuotaState.stale}
             goQuotaLoading={goQuotaState.loading}
           />
         )
+      ) : dualComp ? (
+        <dualComp.DualCollapsed
+          period={period}
+          cursorPercent={cursorPercent}
+          viewTab={dual.viewTab}
+          goQuota={goQuotaState.usage}
+        />
       ) : (
-        dualComp ? (
-          <dualComp.DualCollapsed
-            period={period}
-            cursorPercent={cursorPercent}
-            viewTab={dual.viewTab}
-            goQuota={goQuotaState.usage}
-          />
-        ) : (
-          <components.Collapsed period={period} cursorPercent={cursorPercent} />
-        )
+        <components.Collapsed period={period} cursorPercent={cursorPercent} />
       )}
     </div>
   )

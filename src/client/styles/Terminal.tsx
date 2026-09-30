@@ -14,6 +14,7 @@ import { useDeepseekBalance } from '../state/deepseek-balance'
 import { dollars, GO_LIMITS } from '../state/go-quota'
 import type { GoQuotaUsage } from '../state/go-quota'
 import { useCountdown } from '../state/countdown'
+import { useT } from '../locale/translator'
 
 /** 终端 · 展开态 props（兼容余额注入与自轮询）。 */
 export interface TerminalExpandedProps extends ExpandedProps {
@@ -41,6 +42,7 @@ export function TerminalExpanded({
   // 若上层未注入（经典风格走 components.Expanded 通用路径），则自取轮询 store
   const fallback = useDeepseekBalance()
   const { remaining } = useCountdown()
+  const t = useT()
   const deepseek = deepseekProp !== undefined ? deepseekProp : fallback.data
   const deepseekError = deepseekErrorProp !== undefined ? deepseekErrorProp : fallback.error
   const deepseekStale = deepseekStaleProp !== undefined ? deepseekStaleProp : fallback.stale
@@ -54,8 +56,8 @@ export function TerminalExpanded({
       </div>
       <div className="term-body">
         <div className="tline"><span className="ps">$</span><span className="txt">ds rate --now</span></div>
-        <div className="tline"><span className="ps">▸</span><span className="nowv">{period === 'peak' ? '当前：高峰' : '当前：空闲'}</span></div>
-        <div className="tline"><span className="dim">{isWeekend(new Date()) ? '周末全天空闲｜低谷' : '09:00–12:00 · 14:00–18:00'}</span></div>
+        <div className="tline"><span className="ps">▸</span><span className="nowv">{t('skin.terminalNow', { period: period === 'peak' ? t('period.peak') : t('period.idle') })}</span></div>
+        <div className="tline"><span className="dim">{isWeekend(new Date()) ? t('period.weekend') : t('skin.terminalHours')}</span></div>
         <UsageBar goQuota={goQuota} goQuotaError={goQuotaError} goQuotaStale={goQuotaStale} goQuotaLoading={goQuotaLoading} />
         <Toggle expanded={priceTableExpanded} onToggle={onTogglePriceTable} />
         {priceTableExpanded && (
@@ -73,7 +75,7 @@ export function TerminalExpanded({
       </div>
       {priceTableExpanded && (
         <div className="term-foot">
-          更新频率 · 剩 {remaining}s
+          {t('common.refreshIn', { seconds: remaining })}
         </div>
       )}
     </div>
@@ -102,12 +104,13 @@ function TerminalBalance({
 }): JSX.Element {
   const hasDeepseek = !!deepseek
   const hasGo = !!goQuota
+  const t = useT()
   if (!hasDeepseek && !hasGo) {
     if (deepseekLoading || goQuotaLoading) {
       return (
         <div className="ttbl">
           <div className="tline"><span className="ps">$</span><span className="txt">ds balance</span></div>
-          <div className="tt-row"><span className="m" style={{ color: 'oklch(68% 0.02 240)' }}>· 加载中…</span></div>
+          <div className="tt-row"><span className="m" style={{ color: 'oklch(68% 0.02 240)' }}>· {t('common.loading')}</span></div>
         </div>
       )
     }
@@ -117,14 +120,14 @@ function TerminalBalance({
         <div className="ttbl">
           <div className="tline"><span className="ps">$</span><span className="txt">ds balance</span></div>
           <div className="tt-row"><span className="m" style={{ color: '#e07a7a' }}>{err}</span></div>
-          <div className="tline"><span className="dim">请在设置页配置 Key 后刷新</span></div>
+          <div className="tline"><span className="dim">{t('common.configureKeyHint')}</span></div>
         </div>
       )
     }
     return (
       <div className="ttbl">
         <div className="tline"><span className="ps">$</span><span className="txt">ds balance</span></div>
-        <div className="tt-row"><span className="m" style={{ color: 'oklch(68% 0.02 240)' }}>暂无数据</span></div>
+        <div className="tt-row"><span className="m" style={{ color: 'oklch(68% 0.02 240)' }}>{t('common.empty')}</span></div>
       </div>
     )
   }
@@ -137,29 +140,29 @@ function TerminalBalance({
     <div className="ttbl">
       <div className="tline"><span className="ps">$</span><span className="txt">ds balance</span></div>
       <div className="tt-head">
-        <span>项</span>
-        <span>余额</span>
+        <span>{t('skin.terminalColItem')}</span>
+        <span>{t('skin.terminalColBalance')}</span>
       </div>
       {hasDeepseek && (
         <div className="tt-row">
-          <span className="m">DeepSeek 余额</span>
+          <span className="m">{t('common.deepseekBalance')}</span>
           <span className="p"><span className="n" style={{ width: 'auto', color: 'oklch(88% 0.02 150)' }}>{pick ? `${pick.total_balance ?? '--'} ${pick.currency ?? 'CNY'}` : '--'}</span></span>
         </div>
       )}
       {hasGo && (
         <div className="tt-row">
-          <span className="m">Go 周额度</span>
+          <span className="m">{t('common.goWeeklyQuota')}</span>
           <span className="p"><span className="n" style={{ width: 'auto' }}>{goQuota!.weekly.percent.toFixed(1)}% · {dollars(goQuota!.weekly.percent, GO_LIMITS.weekly)}</span></span>
         </div>
       )}
       {hasGo && (
         <div className="tt-row">
-          <span className="m">Go 月额度</span>
+          <span className="m">{t('common.goMonthlyQuota')}</span>
           <span className="p"><span className="n" style={{ width: 'auto' }}>{goQuota!.monthly.percent.toFixed(1)}% · {dollars(goQuota!.monthly.percent, GO_LIMITS.monthly)}</span></span>
         </div>
       )}
       {stale && (deepseekError || goQuotaError) && (
-        <div className="tline"><span className="dim" style={{ color: '#c07a5a' }}>缓存值 · {deepseekError ?? goQuotaError}</span></div>
+        <div className="tline"><span className="dim" style={{ color: '#c07a5a' }}>{t('common.staleWithDetail', { detail: deepseekError ?? goQuotaError ?? '' })}</span></div>
       )}
       {hasDeepseek && !deepseek!.is_available && (
         <div className="tline"><span className="dim">is_available: false</span></div>
@@ -170,10 +173,11 @@ function TerminalBalance({
 
 /** 终端 · 收起态（光标 + 峰/闲）。 */
 export function TerminalCollapsed({ period }: CollapsedProps): JSX.Element {
+  const t = useT()
   return (
     <div className="ds-collapsed-06">
       <span className="caret">▍</span>
-      <span className="lbl">{period === 'peak' ? '峰' : '闲'}</span>
+      <span className="lbl">{period === 'peak' ? t('period.peakShort') : t('period.idleShort')}</span>
     </div>
   )
 }

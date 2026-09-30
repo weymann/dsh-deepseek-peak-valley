@@ -5,10 +5,10 @@
  * 站点点出 00/09/12/14/18/24，「列车」随时段移动（按当前北京时间实时计算，
  * 001-接口契约 §3，不得写死），下方图例；当前时段数字加粗（CSS 承担）。
  */
-import type { PeriodState } from '../../core/types'
 import { Badge, DeepseekBalance, Toggle, UsageBar, CountdownFooter } from '../components/primitives'
 import { isWeekend } from '../../core/period'
 import type { CollapsedProps, ExpandedProps } from './classic'
+import { useT } from '../locale/translator'
 
 /** 站点位置（百分比）。 */
 const STATIONS: readonly string[] = ['0%', '37.5%', '50%', '58.34%', '75%', '100%']
@@ -29,6 +29,7 @@ export function MetroExpanded({
   goQuotaLoading,
 }: ExpandedProps): JSX.Element {
   const weekend = isWeekend(new Date())
+  const t = useT()
   return (
     <div className={`w ds-style-04${priceTableExpanded ? '' : ' is-collapsed'}`} data-weekend={weekend ? '1' : '0'}>
       <div className="w-head">
@@ -45,8 +46,8 @@ export function MetroExpanded({
         <span>00</span><span>09</span><span>12</span><span>14</span><span>18</span><span>24</span>
       </div>
       <div className="legend">
-        <span><i className="lg-pk" />高峰</span>
-        <span><i className="lg-id" />空闲</span>
+        <span><i className="lg-pk" />{t('period.peak')}</span>
+        <span><i className="lg-id" />{t('period.idle')}</span>
       </div>
       <UsageBar goQuota={goQuota} goQuotaError={goQuotaError} goQuotaStale={goQuotaStale} goQuotaLoading={goQuotaLoading} />
       <Toggle expanded={priceTableExpanded} onToggle={onTogglePriceTable} />
@@ -59,12 +60,13 @@ export function MetroExpanded({
 /** 时刻线 · 收起态（垂直 mini 线路，列车位置按实时时钟移动）。 */
 export function MetroCollapsed({ period, cursorPercent }: CollapsedProps): JSX.Element {
   const weekend = isWeekend(new Date())
+  const t = useT()
   return (
     <div className="ds-collapsed-04" data-weekend={weekend ? '1' : '0'}>
       <span className="mini">
         <span className="train" style={{ top: `${cursorPercent}%` }} />
       </span>
-      <span className="lbl">{period === 'peak' ? '峰' : '闲'}</span>
+      <span className="lbl">{period === 'peak' ? t('period.peakShort') : t('period.idleShort')}</span>
     </div>
   )
 }

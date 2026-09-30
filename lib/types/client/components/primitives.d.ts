@@ -3,16 +3,19 @@
  *
  * 全部展开态风格共用的结构件：徽章 / 时间轴 / 价格表 / 展开切换按钮。
  * 逐款差异由各风格组件提供专属标记（印戳、地铁线路、终端、昼夜、编辑…）。
+ *
+ * 全部文案经 `useT()` 取自官方 locale 座位（随「设置 → 常规 → 语言」切换）；
+ * 计费项等「领域键」保持中文常量作为数据标识，仅渲染层翻译。
  */
 import type { ReactNode } from 'react';
-import { type BillingItem, type ModelName, type PeriodState } from '../../core/types';
+import { type PeriodState } from '../../core/types';
 import type { DeepseekBalanceData } from '../state/deepseek-balance';
 import type { GoQuotaUsage } from '../state/go-quota';
+import type { PluginT } from '../locale/translator';
 /** 数字渲染：固定两位小数（0.05 / 1.50 / 27.00）。 */
 export declare function formatPrice(value: number): string;
-/** 计费模型与计费项顺序（价格表行序）。 */
-export declare const MODEL_ORDER: readonly ModelName[];
-export declare const ITEM_ORDER: readonly BillingItem[];
+/** 时段全称 / 简称（长 = 高峰，短 = 峰）。 */
+export declare function periodWord(t: PluginT, period: PeriodState, long?: boolean): string;
 /** 时段徽章（圆点 + 高峰/空闲 文字）。 */
 export declare function Badge({ period }: {
     period: PeriodState;
@@ -47,10 +50,6 @@ export declare function UsageBar({ goQuota, goQuotaError, goQuotaStale, goQuotaL
     goQuotaError?: string | null;
     goQuotaStale?: boolean;
     goQuotaLoading?: boolean;
-}): JSX.Element;
-/** 价格表（`.wt`）：两模型分组 × 3 计费项 × [空闲, 高峰]，当前时段列高亮条。 */
-export declare function PriceTable({ period }: {
-    period: PeriodState;
 }): JSX.Element;
 /** 余额查询展开/收起切换按钮（原 价格表，`.w-toggle` + aria-expanded + chevron）。 */
 export declare function Toggle({ expanded, onToggle, label, }: {

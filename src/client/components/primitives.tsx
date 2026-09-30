@@ -3,45 +3,46 @@
  *
  * 全部展开态风格共用的结构件：徽章 / 时间轴 / 价格表 / 展开切换按钮。
  * 逐款差异由各风格组件提供专属标记（印戳、地铁线路、终端、昼夜、编辑…）。
+ *
+ * 全部文案经 `useT()` 取自官方 locale 座位（随「设置 → 常规 → 语言」切换）；
+ * 计费项等「领域键」保持中文常量作为数据标识，仅渲染层翻译。
  */
 import type { ReactNode } from 'react'
-import {
-  PRICE_TABLE,
-  TIMELINE_CURSOR,
-  type BillingItem,
-  type ModelName,
-  type PeriodState,
-} from '../../core/types'
+import { TIMELINE_CURSOR, type PeriodState } from '../../core/types'
 import { isWeekend, timelineSegmentsAt } from '../../core/period'
 import { ChevronIcon } from './icons'
 import type { DeepseekBalanceData } from '../state/deepseek-balance'
 import { useGoQuota, dollars, GO_LIMITS } from '../state/go-quota'
 import type { GoQuotaUsage } from '../state/go-quota'
 import { useCountdown } from '../state/countdown'
+import { useT } from '../locale/translator'
+import type { PluginT } from '../locale/translator'
 
 /** 数字渲染：固定两位小数（0.05 / 1.50 / 27.00）。 */
 export function formatPrice(value: number): string {
   return value.toFixed(2)
 }
 
-/** 计费模型与计费项顺序（价格表行序）。 */
-export const MODEL_ORDER: readonly ModelName[] = ['V4-Flash', 'V4-Pro']
-export const ITEM_ORDER: readonly BillingItem[] = ['输入·缓存命中', '输入·缓存未命中', '输出']
+/** 时段全称 / 简称（长 = 高峰，短 = 峰）。 */
+export function periodWord(t: PluginT, period: PeriodState, long?: boolean): string {
+  if (period === 'peak') return long ? t('period.peakLong') : t('period.peakShort')
+  return long ? t('period.idleLong') : t('period.idleShort')
+}
 
 /** 时段徽章（圆点 + 高峰/空闲 文字）。 */
 export function Badge({ period }: { period: PeriodState }): JSX.Element {
+  const t = useT()
   return (
     <span className="w-badge">
       <i className="dot" />
-      {period === 'peak' ? '高峰' : '空闲'}
+      {period === 'peak' ? t('period.peak') : t('period.idle')}
     </span>
   )
 }
 
 /** 双态文字（高峰/空闲；永不共存——仅渲染当前时段）。 */
 export function PeriodWord({ period, long }: { period: PeriodState; long?: boolean }): ReactNode {
-  if (period === 'peak') return long ? '高峰' : '峰'
-  return long ? '空闲' : '闲'
+  return periodWord(useT(), period, long)
 }
 
 /**
@@ -58,9 +59,10 @@ export function Timeline({
   meta?: string
   cursorPercent?: number
 }): JSX.Element {
+  const t = useT()
   const weekend = isWeekend()
   const segments = timelineSegmentsAt(new Date())
-  const defaultMeta = weekend ? '周末全天空闲｜低谷' : '高峰 09:00–12:00 · 14:00–18:00｜其余空闲'
+  const defaultMeta = weekend ? t('period.weekend') : t('period.rule')
   return (
     <div className="w-tl">
       <div className="tl-bar">
@@ -102,6 +104,7 @@ export function UsageBar({
   goQuotaLoading?: boolean
 }): JSX.Element {
   const fallback = useGoQuota()
+  const t = useT()
   const usage = goQuota !== undefined ? goQuota : fallback.usage
   const error = goQuotaError !== undefined ? goQuotaError : fallback.error
   const stale = goQuotaStale !== undefined ? goQuotaStale : fallback.stale
@@ -116,7 +119,7 @@ export function UsageBar({
           <div className="tl-track" />
           <span className="tl-cur" style={{ left: '0%', opacity: 0.3 }} />
         </div>
-        <div className="tl-meta">Go 5h 用量 · 加载中…</div>
+        <div className="tl-meta">{t('timeline.goUsageLoading')}</div>
       </div>
     )
   }
@@ -127,7 +130,7 @@ export function UsageBar({
           <div className="tl-track" />
           <span className="tl-cur" style={{ left: '0%', opacity: 0.3 }} />
         </div>
-        <div className="tl-meta">Go 5h 用量 · {error}</div>
+        <div className="tl-meta">{t('timeline.goUsageError', { error })}</div>
       </div>
     )
   }
@@ -138,7 +141,7 @@ export function UsageBar({
           <div className="tl-track" />
           <span className="tl-cur" style={{ left: '0%', opacity: 0.3 }} />
         </div>
-        <div className="tl-meta">Go 5h 用量 · 暂无数据</div>
+        <div className="tl-meta">{t('timeline.goUsageEmpty')}</div>
       </div>
     )
   }
@@ -152,53 +155,10 @@ export function UsageBar({
         <span className="tl-cur" style={{ left: `${pct}%` }} />
       </div>
       <div className="tl-meta">
-        Go 5h 用量 {pct.toFixed(1)}%{stale ? ' · 缓存值' : ''}　{dollars(pct, GO_LIMITS.rolling)}
+        {t('timeline.goUsage', { percent: pct.toFixed(1) })}
+        {stale ? t('timeline.staleSuffix') : ''}　{dollars(pct, GO_LIMITS.rolling)}
       </div>
     </div>
-  )
-}
-
-/** 价格表（`.wt`）：两模型分组 × 3 计费项 × [空闲, 高峰]，当前时段列高亮条。 */
-export function PriceTable({ period }: { period: PeriodState }): JSX.Element {
-  return (
-    <table className="wt">
-      <thead>
-        <tr>
-          <th>计费项</th>
-          <th>
-            空闲<i className="hx hi" />
-          </th>
-          <th>
-            高峰<i className="hx hp" />
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        {MODEL_ORDER.map((model) => (
-          <ModelGroup key={model} model={model} />
-        ))}
-      </tbody>
-    </table>
-  )
-}
-
-function ModelGroup({ model }: { model: ModelName }): JSX.Element {
-  return (
-    <>
-      <tr className="wtm">
-        <td colSpan={3}>{model}</td>
-      </tr>
-      {ITEM_ORDER.map((item) => {
-        const [idle, peak] = PRICE_TABLE[model][item]
-        return (
-          <tr key={item}>
-            <td>{item}</td>
-            <td className="n ci">{formatPrice(idle)}</td>
-            <td className="n cp">{formatPrice(peak)}</td>
-          </tr>
-        )
-      })}
-    </>
   )
 }
 
@@ -206,29 +166,32 @@ function ModelGroup({ model }: { model: ModelName }): JSX.Element {
 export function Toggle({
   expanded,
   onToggle,
-  label = '余额查询',
+  label,
 }: {
   expanded: boolean
   onToggle: () => void
   label?: string
 }): JSX.Element {
+  const t = useT()
   return (
     <button type="button" className="w-toggle" aria-expanded={expanded} onClick={onToggle}>
-      <span>{label}</span>
+      <span>{label ?? t('common.balance')}</span>
       <ChevronIcon className="t-chev" />
     </button>
   )
 }
 
 /** 页脚（单位标注）。 */
-export function UnitFooter({ children, note = '元 / 百万 tokens · 北京时间' }: { children?: ReactNode; note?: string }): JSX.Element {
-  return <div className="w-foot">{note}{children}</div>
+export function UnitFooter({ children, note }: { children?: ReactNode; note?: string }): JSX.Element {
+  const t = useT()
+  return <div className="w-foot">{note ?? t('common.usageUnit')}{children}</div>
 }
 
 /** 余额查询页脚：动态 60s 倒计时（归零触发刷新，见 state/countdown）。 */
 export function CountdownFooter({ children }: { children?: ReactNode }): JSX.Element {
   const { remaining } = useCountdown()
-  return <UnitFooter note={`更新频率 · 剩 ${remaining}s`}>{children}</UnitFooter>
+  const t = useT()
+  return <UnitFooter note={t('common.refreshIn', { seconds: remaining })}>{children}</UnitFooter>
 }
 
 /** 余额查询面板 props（DeepSeek 余额 + Go 周/月额度）。 */
@@ -260,20 +223,21 @@ export function DeepseekBalance({
 }: DeepseekBalanceProps): JSX.Element {
   const hasDeepseek = !!deepseek
   const hasGo = !!goQuota
+  const t = useT()
   if (!hasDeepseek && !hasGo) {
     if (deepseekLoading || goQuotaLoading) {
-      return <div style={{ padding: '8px 2px', fontSize: '10.5px', opacity: 0.65 }}>加载中…</div>
+      return <div style={{ padding: '8px 2px', fontSize: '10.5px', opacity: 0.65 }}>{t('common.loading')}</div>
     }
     const err = deepseekError || goQuotaError
     if (err) {
       return (
         <div style={{ padding: '8px 2px' }}>
           <div style={{ fontSize: '10.5px', color: '#a33' }}>{err}</div>
-          <div style={{ marginTop: 4, fontSize: '9.5px', opacity: 0.7 }}>请在设置页配置 Key 后刷新</div>
+          <div style={{ marginTop: 4, fontSize: '9.5px', opacity: 0.7 }}>{t('common.configureKeyHint')}</div>
         </div>
       )
     }
-    return <div style={{ padding: '8px 2px', fontSize: '10.5px', opacity: 0.65 }}>暂无数据</div>
+    return <div style={{ padding: '8px 2px', fontSize: '10.5px', opacity: 0.65 }}>{t('common.empty')}</div>
   }
 
   // DeepSeek 余额按币种返回数组（如 USD + CNY 各一条）；优先取用户充值的人民币
@@ -299,25 +263,31 @@ export function DeepseekBalance({
     <div className="w-balance" style={{ marginTop: 2 }}>
       {hasDeepseek && (
         <div style={rowStyle}>
-          <span>DeepSeek 余额</span>
-          {num(pick ? `${pick.total_balance ?? '--'} ${pick.currency ?? 'CNY'}${deepseek!.is_available ? '' : ' · 不可用'}` : '--')}
+          <span>{t('common.deepseekBalance')}</span>
+          {num(pick ? `${pick.total_balance ?? '--'} ${pick.currency ?? 'CNY'}${deepseek!.is_available ? '' : t('common.unavailable')}` : '--')}
         </div>
       )}
       {hasGo && (
         <div style={{ ...rowStyle, ...(hasDeepseek ? sepStyle : {}) }}>
-          <span>Go 周额度</span>
+          <span>{t('common.goWeeklyQuota')}</span>
           {num(`${goQuota!.weekly.percent.toFixed(1)}% · ${dollars(goQuota!.weekly.percent, GO_LIMITS.weekly)}`)}
         </div>
       )}
       {hasGo && (
         <div style={{ ...rowStyle, ...sepStyle }}>
-          <span>Go 月额度</span>
+          <span>{t('common.goMonthlyQuota')}</span>
           {num(`${goQuota!.monthly.percent.toFixed(1)}% · ${dollars(goQuota!.monthly.percent, GO_LIMITS.monthly)}`)}
         </div>
       )}
       {stale && (
         <div style={{ fontSize: '9.5px', color: '#a33', marginTop: 4, padding: '0 2px' }}>
-          缓存值 · {deepseekError ?? goQuotaError ?? ''}
+          {t('common.staleWithDetail', { detail: deepseekError ?? goQuotaError ?? '' })}
+        </div>
+      )}
+      {/* 一个数据源成功、另一个失败时仍要暴露失败：否则错误被静默吞掉 */}
+      {!stale && ((deepseekError && hasGo) || (goQuotaError && hasDeepseek)) && (
+        <div style={{ fontSize: '9.5px', color: '#a33', marginTop: 4, padding: '0 2px' }}>
+          {deepseekError ?? goQuotaError}
         </div>
       )}
     </div>

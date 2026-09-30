@@ -8,7 +8,6 @@
  * 双视图风格（11 · 无人岛）额外提供 DualExpanded / DualCollapsed。
  */
 import type { StyleId } from '../../core/catalog'
-import type { PeriodState } from '../../core/types'
 import {
   AnimalIslandCollapsed,
   AnimalIslandExpanded,
@@ -21,6 +20,7 @@ import { EditorialCollapsed, EditorialExpanded } from './Editorial'
 import { MetroCollapsed, MetroExpanded } from './Metro'
 import { ReceiptCollapsed, ReceiptExpanded } from './Receipt'
 import { TerminalCollapsed, TerminalExpanded } from './Terminal'
+import { useT } from '../locale/translator'
 
 /** 单款风格组件对。 */
 export interface StyleComponents {
@@ -36,19 +36,21 @@ export interface DualViewStyleComponents extends StyleComponents {
 
 /** 胶囊 · 收起态（横向 pill，圆点 + 「高峰/空闲」全词）。 */
 function PillsCollapsed({ period }: CollapsedProps): JSX.Element {
+  const t = useT()
   return (
     <div className="ds-collapsed-05">
       <i className="dot" />
-      {period === 'peak' ? '高峰' : '空闲'}
+      {period === 'peak' ? t('period.peak') : t('period.idle')}
     </div>
   )
 }
 
 /** 粗野 · 收起态（反色块「峰/闲」）。 */
 function BrutalistCollapsed({ period }: CollapsedProps): JSX.Element {
+  const t = useT()
   return (
     <div className="ds-collapsed-07">
-      <span className="box">{period === 'peak' ? '峰' : '闲'}</span>
+      <span className="box">{period === 'peak' ? t('period.peakShort') : t('period.idleShort')}</span>
     </div>
   )
 }

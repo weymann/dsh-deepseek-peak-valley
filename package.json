@@ -1,7 +1,7 @@
 {
   "name": "dsh-deepseek-peak-valley",
   "version": "0.2.0",
-  "description": "DeepSeek 分时段计费小组件（DSH client 插件）：按北京时间自动判定高峰/空闲时段，11 款风格侧边栏小组件 + 设置页；双视图风格支持分时段计费与当前会话真实用量（token-meter），预估费用分 V4-Flash/V4-Pro、空闲/高峰计价。价格基于 IT之家公开的 DeepSeek V4 分时段报价，仅作演示。",
+  "description": "DeepSeek time-of-day pricing widget (DSH client plugin): detects DeepSeek peak/off-peak windows in Beijing time and ships 11 sidebar widget styles plus a settings page. The dual-view style shows time-of-day rates and real usage for the current session (token-meter); estimated cost is broken down by V4-Flash/V4-Pro and off-peak/peak. Built on the official DSH locale layer, so all copy follows the language selected under Settings → General. Prices come from publicly published DeepSeek V4 time-of-day rates and are for demonstration only.",
   "type": "module",
   "repository": {
     "type": "git",
@@ -42,14 +42,16 @@
     }
   },
   "scripts": {
-    "build": "pnpm build:types && tsdown",
-    "build:types": "tsc -p tsconfig.json --noEmit false --declaration --emitDeclarationOnly --outDir lib/types && tsc -p tsconfig.client.json --noEmit false --declaration --emitDeclarationOnly --outDir lib/types",
+    "build": "pnpm build:types && pnpm build:bundle",
+    "build:types": "node -e \"require('node:fs').rmSync('lib/types',{recursive:true,force:true})\" && tsc -p tsconfig.json --noEmit false --declaration --emitDeclarationOnly --outDir lib/types && tsc -p tsconfig.client.json --noEmit false --declaration --emitDeclarationOnly --outDir lib/types",
+    "build:bundle": "tsdown",
     "watch": "tsdown --watch",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.client.json --noEmit",
     "verify": "pnpm typecheck"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.1",
+    "@deepseek-ai/dsh-client-locale": "^0.1.0-rc.8",
     "@deepseek-ai/dsh-client-runtime": "^0.1.0-rc.8",
     "@deepseek-ai/dsh-client-ui-settings": "^0.1.0-rc.8",
     "@deepseek-ai/dsh-client-ui-sidebar": "^0.1.0-rc.8",
@@ -59,6 +61,7 @@
   },
   "devDependencies": {
     "@deepseek-ai/cordis": "^4.0.1",
+    "@deepseek-ai/dsh-client-locale": "^0.1.0-rc.8",
     "@deepseek-ai/dsh-client-runtime": "^0.1.0-rc.8",
     "@deepseek-ai/dsh-client-ui-settings": "^0.1.0-rc.8",
     "@deepseek-ai/dsh-client-ui-sidebar": "^0.1.0-rc.8",

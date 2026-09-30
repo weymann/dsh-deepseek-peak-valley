@@ -53,5 +53,5 @@ export declare const GO_QUOTA: {
     readonly weekly: 30;
     readonly monthly: 60;
 };
-export declare function AnimalIslandExpanded({ period, priceTableExpanded, onTogglePriceTable, cursorPercent, viewTab, onToggleViewTab, usageDetailExpanded, onToggleUsageDetail, usage, usageReal, goQuota, goQuotaError, goQuotaStale, deepseek, deepseekError, deepseekStale, deepseekLoading, }: AnimalIslandExpandedProps): JSX.Element;
+export declare function AnimalIslandExpanded({ priceTableExpanded, onTogglePriceTable, cursorPercent, viewTab, onToggleViewTab, usageDetailExpanded, onToggleUsageDetail, usage, usageReal, goQuota, goQuotaError, goQuotaStale, deepseek, deepseekError, deepseekStale, deepseekLoading, }: AnimalIslandExpandedProps): JSX.Element;
 export declare function AnimalIslandCollapsed({ period, viewTab, usage, }: AnimalIslandCollapsedProps): JSX.Element;

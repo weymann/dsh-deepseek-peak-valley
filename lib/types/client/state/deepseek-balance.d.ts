@@ -12,7 +12,10 @@ export interface DeepseekSnapshot {
     data: DeepseekBalanceData | null;
     ok: boolean;
     stale: boolean;
+    /** 宿主返回的英文兜底文案（本地化在渲染层按当前语言完成）。 */
     error: string | null;
+    /** 与 `error` 配对的稳定机器码，供渲染层本地化。 */
+    errorCode: string | null;
     fetchedAt: string | null;
     loading: boolean;
 }

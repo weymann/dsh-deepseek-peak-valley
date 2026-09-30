@@ -5,11 +5,11 @@
  * （0.35s 过渡）；太阳/月亮图标切换 + 大字「高峰时段 / 空闲时段」；时间轴
  * 暖段=高峰、冷段=空闲。
  */
-import type { PeriodState } from '../../core/types'
 import { MoonIcon, SunIcon } from '../components/icons'
 import { DeepseekBalance, Timeline, Toggle, UsageBar, CountdownFooter } from '../components/primitives'
 import { isWeekend } from '../../core/period'
 import type { CollapsedProps, ExpandedProps } from './classic'
+import { useT } from '../locale/translator'
 
 /** 昼夜 · 展开态（余额查询替换价格表）。 */
 export function DayNightExpanded({
@@ -27,16 +27,19 @@ export function DayNightExpanded({
   goQuotaLoading,
 }: ExpandedProps): JSX.Element {
   const day = period === 'peak'
+  const t = useT()
   return (
     <div className={`w ds-style-09${priceTableExpanded ? '' : ' is-collapsed'}`}>
       <div className="w-head">
         <span className="sky">
           {day ? <SunIcon className="sun" /> : <MoonIcon className="moon" />}
         </span>
-        <span className="w-now">{day ? '高峰时段' : '空闲时段'}</span>
+        <span className="w-now">{day ? t('skin.dayNightPeak') : t('skin.dayNightIdle')}</span>
       </div>
-      <div className="w-sub">北京时间 · {isWeekend(new Date()) ? '周末全天空闲｜低谷' : '高峰 09:00–12:00 / 14:00–18:00'}</div>
-      <Timeline period={period} meta="暖色段 = 高峰　冷色段 = 空闲" cursorPercent={cursorPercent} />
+      <div className="w-sub">
+        {t('skin.dayNightSub', { rule: isWeekend(new Date()) ? t('period.weekend') : t('skin.dayNightWeekend') })}
+      </div>
+      <Timeline period={period} meta={t('period.dayNightWarmCool')} cursorPercent={cursorPercent} />
       <UsageBar goQuota={goQuota} goQuotaError={goQuotaError} goQuotaStale={goQuotaStale} goQuotaLoading={goQuotaLoading} />
       <Toggle expanded={priceTableExpanded} onToggle={onTogglePriceTable} />
       {priceTableExpanded && (
@@ -50,10 +53,11 @@ export function DayNightExpanded({
 /** 昼夜 · 收起态（太阳/月亮 + 峰/闲）。 */
 export function DayNightCollapsed({ period }: CollapsedProps): JSX.Element {
   const day = period === 'peak'
+  const t = useT()
   return (
     <div className="ds-collapsed-09">
       {day ? <SunIcon className="sun" /> : <MoonIcon className="moon" />}
-      <span className="lbl">{day ? '峰' : '闲'}</span>
+      <span className="lbl">{day ? t('period.peakShort') : t('period.idleShort')}</span>
     </div>
   )
 }

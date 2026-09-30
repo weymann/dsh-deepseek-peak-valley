@@ -7,6 +7,10 @@
  * - DeepSeek：代理 GET https://api.deepseek.com/user/balance
  * - 缓存 single-flight + TTL 60s + 失败退避 10s + stale-on-error
  * - 注册同源路由 GET /go-quota/usage, GET/POST /go-quota/config, GET /deepseek/balance
+ *
+ * 文案与语言：host 不持有浏览器 locale。报错同时给出英文 `error` 与稳定
+ * 机器码 `errorCode`；client 侧按当前语言把已知码翻译成本地化文案
+ * （见 src/client/locale 的 `translateHostError`），未知码原样展示英文。
  */
 import * as fs from 'node:fs'
 import * as path from 'node:path'
@@ -14,6 +18,33 @@ import * as os from 'node:os'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 
 export const inject = ['webServer']
+
+/** 稳定错误码（client 侧映射为本地化文案；新增码需同步 locale 字典）。 */
+export type ErrorCode =
+  | 'go-no-key'
+  | 'go-key-invalid'
+  | 'go-not-subscribed'
+  | 'go-malformed'
+  | 'deepseek-no-key'
+  | 'deepseek-key-invalid'
+  | 'deepseek-malformed'
+  | 'bad-json'
+  | 'unknown'
+
+/** 带机器码的错误：`error` 为英文兜底文案，`errorCode` 供 client 本地化。 */
+class CodedError extends Error {
+  readonly code: ErrorCode
+  constructor(code: ErrorCode, message: string) {
+    super(message)
+    this.name = 'CodedError'
+    this.code = code
+  }
+}
+
+/** 取错误的机器码（非 CodedError 视为未知）。 */
+function codeOf(error: unknown): ErrorCode {
+  return error instanceof CodedError ? error.code : 'unknown'
+}
 
 const GO_ENDPOINT = 'https://opencode.ai/zen/go/v1/usage'
 const DEEPSEEK_ENDPOINT = 'https://api.deepseek.com/user/balance'
@@ -35,11 +66,13 @@ interface CacheState<T> {
   at: number
   data: T | null
   error: string | null
+  /** 与 `error` 配对的稳定机器码，供 client 本地化。 */
+  errorCode: ErrorCode | null
   promise: Promise<T> | null
 }
 
-const goCache: CacheState<GoQuotaUsage> = { at: 0, data: null, error: null, promise: null }
-const dsCache: CacheState<{ is_available: boolean; balance_infos: Array<{ currency: string; total_balance: string; granted_balance: string; topped_up_balance: string }> }> = { at: 0, data: null, error: null, promise: null }
+const goCache: CacheState<GoQuotaUsage> = { at: 0, data: null, error: null, errorCode: null, promise: null }
+const dsCache: CacheState<{ is_available: boolean; balance_infos: Array<{ currency: string; total_balance: string; granted_balance: string; topped_up_balance: string }> }> = { at: 0, data: null, error: null, errorCode: null, promise: null }
 
 /** 持久配置（设置页写入） */
 interface PersistConfig {
@@ -140,7 +173,7 @@ function resolveDeepseekKey(): string | undefined {
 
 async function fetchGo(): Promise<GoQuotaUsage> {
   const key = resolveGoKey()
-  if (!key) throw new Error('未找到 OpenCode Go API Key（请在设置页“Go套餐 Key”中配置）')
+  if (!key) throw new CodedError('go-no-key', 'No OpenCode Go API key found (configure it under "Go plan key" in Settings)')
   const res = await fetch(GO_ENDPOINT, {
     headers: { authorization: `Bearer ${key}` },
     signal: AbortSignal.timeout(8000),
@@ -148,20 +181,22 @@ async function fetchGo(): Promise<GoQuotaUsage> {
   if (!res.ok) {
     const body = await res.text().catch(() => '')
     let msg = `HTTP ${res.status}`
-    if (res.status === 401) msg = 'Go API Key 无效（401）'
-    else if (res.status === 403) msg = '未订阅 OpenCode Go（403）'
-    else if (body) msg += ` ${body.slice(0, 200)}`
+    if (res.status === 401) throw new CodedError('go-key-invalid', 'Go API key is invalid (401)')
+    if (res.status === 403) throw new CodedError('go-not-subscribed', 'OpenCode Go is not subscribed (403)')
+    if (body) msg += ` ${body.slice(0, 200)}`
     throw new Error(msg)
   }
   const data: any = await res.json()
   const usage = data?.usage
-  if (!usage || !usage.rolling || !usage.weekly || !usage.monthly) throw new Error('返回结构异常：缺少 rolling/weekly/monthly')
+  if (!usage || !usage.rolling || !usage.weekly || !usage.monthly) {
+    throw new CodedError('go-malformed', 'Unexpected response shape: rolling/weekly/monthly missing')
+  }
   return usage as GoQuotaUsage
 }
 
 async function fetchDeepseek(): Promise<{ is_available: boolean; balance_infos: Array<{ currency: string; total_balance: string; granted_balance: string; topped_up_balance: string }> }> {
   const key = resolveDeepseekKey()
-  if (!key) throw new Error('未找到 DeepSeek API Key（请在设置页“DeepSeek Key”中配置）')
+  if (!key) throw new CodedError('deepseek-no-key', 'No DeepSeek API key found (configure it under "DeepSeek key" in Settings)')
   const res = await fetch(DEEPSEEK_ENDPOINT, {
     headers: { Authorization: `Bearer ${key}` },
     signal: AbortSignal.timeout(8000),
@@ -169,31 +204,32 @@ async function fetchDeepseek(): Promise<{ is_available: boolean; balance_infos: 
   if (!res.ok) {
     const body = await res.text().catch(() => '')
     let msg = `HTTP ${res.status}`
-    if (res.status === 401) msg = 'DeepSeek API Key 无效（401）'
-    else if (body) msg += ` ${body.slice(0, 300)}`
+    if (res.status === 401) throw new CodedError('deepseek-key-invalid', 'DeepSeek API key is invalid (401)')
+    if (body) msg += ` ${body.slice(0, 300)}`
     throw new Error(msg)
   }
   const data: any = await res.json()
   // 期望 { is_available, balance_infos }
   if (data?.balance_infos && Array.isArray(data.balance_infos)) return data
   if (data?.data?.balance_infos) return data.data
-  throw new Error('返回结构异常：缺少 balance_infos')
+  throw new CodedError('deepseek-malformed', 'Unexpected response shape: balance_infos missing')
 }
 
-async function ensureGo(pollMs: number): Promise<{ ok: boolean; usage?: GoQuotaUsage; error?: string; stale?: boolean; fetchedAt: string }> {
+async function ensureGo(pollMs: number): Promise<{ ok: boolean; usage?: GoQuotaUsage; error?: string; errorCode?: ErrorCode; stale?: boolean; fetchedAt: string }> {
   const now = Date.now()
   if (goCache.data && now - goCache.at < pollMs) return { ok: true, usage: goCache.data, fetchedAt: new Date(goCache.at).toISOString() }
   if (goCache.error && now - goCache.at < ERROR_RETRY_GAP_MS) {
-    if (goCache.data) return { ok: true, usage: goCache.data, stale: true, error: goCache.error, fetchedAt: new Date(goCache.at).toISOString() }
-    return { ok: false, error: goCache.error, fetchedAt: new Date(goCache.at).toISOString() }
+    if (goCache.data) return { ok: true, usage: goCache.data, stale: true, error: goCache.error, errorCode: goCache.errorCode ?? 'unknown', fetchedAt: new Date(goCache.at).toISOString() }
+    return { ok: false, error: goCache.error, errorCode: goCache.errorCode ?? 'unknown', fetchedAt: new Date(goCache.at).toISOString() }
   }
   if (goCache.promise) {
     try {
       const u = await goCache.promise
       return { ok: true, usage: u, fetchedAt: new Date(goCache.at).toISOString() }
     } catch (e: any) {
-      if (goCache.data) return { ok: true, usage: goCache.data, stale: true, error: e?.message ?? String(e), fetchedAt: new Date(goCache.at).toISOString() }
-      return { ok: false, error: e?.message ?? String(e), fetchedAt: new Date().toISOString() }
+      const msg = e?.message ?? String(e)
+      if (goCache.data) return { ok: true, usage: goCache.data, stale: true, error: msg, errorCode: codeOf(e), fetchedAt: new Date(goCache.at).toISOString() }
+      return { ok: false, error: msg, errorCode: codeOf(e), fetchedAt: new Date().toISOString() }
     }
   }
   const p = fetchGo()
@@ -202,33 +238,36 @@ async function ensureGo(pollMs: number): Promise<{ ok: boolean; usage?: GoQuotaU
     const u = await p
     goCache.data = u
     goCache.error = null
+    goCache.errorCode = null
     goCache.at = Date.now()
     return { ok: true, usage: u, fetchedAt: new Date(goCache.at).toISOString() }
   } catch (e: any) {
     const msg = e?.message ?? String(e)
     goCache.error = msg
-    if (goCache.data) return { ok: true, usage: goCache.data, stale: true, error: msg, fetchedAt: new Date(goCache.at).toISOString() }
+    goCache.errorCode = codeOf(e)
+    if (goCache.data) return { ok: true, usage: goCache.data, stale: true, error: msg, errorCode: codeOf(e), fetchedAt: new Date(goCache.at).toISOString() }
     goCache.at = Date.now()
-    return { ok: false, error: msg, fetchedAt: new Date(goCache.at).toISOString() }
+    return { ok: false, error: msg, errorCode: codeOf(e), fetchedAt: new Date(goCache.at).toISOString() }
   } finally {
     goCache.promise = null
   }
 }
 
-async function ensureDeepseek(pollMs: number): Promise<{ ok: boolean; data?: any; error?: string; stale?: boolean; fetchedAt: string }> {
+async function ensureDeepseek(pollMs: number): Promise<{ ok: boolean; data?: any; error?: string; errorCode?: ErrorCode; stale?: boolean; fetchedAt: string }> {
   const now = Date.now()
   if (dsCache.data && now - dsCache.at < pollMs) return { ok: true, data: dsCache.data, fetchedAt: new Date(dsCache.at).toISOString() }
   if (dsCache.error && now - dsCache.at < ERROR_RETRY_GAP_MS) {
-    if (dsCache.data) return { ok: true, data: dsCache.data, stale: true, error: dsCache.error, fetchedAt: new Date(dsCache.at).toISOString() }
-    return { ok: false, error: dsCache.error, fetchedAt: new Date(dsCache.at).toISOString() }
+    if (dsCache.data) return { ok: true, data: dsCache.data, stale: true, error: dsCache.error, errorCode: dsCache.errorCode ?? 'unknown', fetchedAt: new Date(dsCache.at).toISOString() }
+    return { ok: false, error: dsCache.error, errorCode: dsCache.errorCode ?? 'unknown', fetchedAt: new Date(dsCache.at).toISOString() }
   }
   if (dsCache.promise) {
     try {
       const d = await dsCache.promise
       return { ok: true, data: d, fetchedAt: new Date(dsCache.at).toISOString() }
     } catch (e: any) {
-      if (dsCache.data) return { ok: true, data: dsCache.data, stale: true, error: e?.message ?? String(e), fetchedAt: new Date(dsCache.at).toISOString() }
-      return { ok: false, error: e?.message ?? String(e), fetchedAt: new Date().toISOString() }
+      const msg = e?.message ?? String(e)
+      if (dsCache.data) return { ok: true, data: dsCache.data, stale: true, error: msg, errorCode: codeOf(e), fetchedAt: new Date(dsCache.at).toISOString() }
+      return { ok: false, error: msg, errorCode: codeOf(e), fetchedAt: new Date().toISOString() }
     }
   }
   const p = fetchDeepseek()
@@ -237,14 +276,16 @@ async function ensureDeepseek(pollMs: number): Promise<{ ok: boolean; data?: any
     const d = await p
     dsCache.data = d
     dsCache.error = null
+    dsCache.errorCode = null
     dsCache.at = Date.now()
     return { ok: true, data: d, fetchedAt: new Date(dsCache.at).toISOString() }
   } catch (e: any) {
     const msg = e?.message ?? String(e)
     dsCache.error = msg
-    if (dsCache.data) return { ok: true, data: dsCache.data, stale: true, error: msg, fetchedAt: new Date(dsCache.at).toISOString() }
+    dsCache.errorCode = codeOf(e)
+    if (dsCache.data) return { ok: true, data: dsCache.data, stale: true, error: msg, errorCode: codeOf(e), fetchedAt: new Date(dsCache.at).toISOString() }
     dsCache.at = Date.now()
-    return { ok: false, error: msg, fetchedAt: new Date(dsCache.at).toISOString() }
+    return { ok: false, error: msg, errorCode: codeOf(e), fetchedAt: new Date(dsCache.at).toISOString() }
   } finally {
     dsCache.promise = null
   }
@@ -259,7 +300,7 @@ function readJsonBody(req: IncomingMessage): Promise<any> {
       try {
         resolve(JSON.parse(body))
       } catch (e) {
-        reject(new Error('JSON 解析失败'))
+        reject(new CodedError('bad-json', 'JSON parse failed'))
       }
     })
     req.on('error', reject)
@@ -339,7 +380,7 @@ export function apply(ctx: any, config: any): () => void {
             }
             json(res, { ok: true, goKeyMasked: maskKey(next.goKey), deepseekKeyMasked: maskKey(next.deepseekKey) })
           } catch (e: any) {
-            json(res, { ok: false, error: e?.message ?? String(e) }, 400)
+            json(res, { ok: false, error: e?.message ?? String(e), errorCode: codeOf(e) }, 400)
           }
           return
         }

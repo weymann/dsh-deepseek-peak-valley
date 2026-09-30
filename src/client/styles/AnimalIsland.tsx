@@ -7,12 +7,12 @@
  * 设计稿：animal-island-widgets-v2.html
  */
 import type { PeriodState, UsageSnapshot, ViewTab } from '../../core/types'
-import { DEMO_USAGE, formatCost, formatRate, formatTokenCount, PRICE_TABLE } from '../../core/types'
+import { DEMO_USAGE, formatCost, formatRate } from '../../core/types'
 import { ChevronIcon } from '../components/icons'
 import { isWeekend, timelineSegmentsAt } from '../../core/period'
-import { formatPrice } from '../components/primitives'
 import type { GoQuotaUsage } from '../state/go-quota'
 import type { DeepseekBalanceData } from '../state/deepseek-balance'
+import { useT } from '../locale/translator'
 
 /* ─── Props ────────────────────────────────────────────────────────── */
 
@@ -93,7 +93,6 @@ function CoinIcon({ className }: { className?: string }): JSX.Element {
 export const GO_QUOTA = { fiveHour: 12, weekly: 30, monthly: 60 } as const
 
 function PricingView({
-  period,
   priceTableExpanded,
   onTogglePriceTable,
   cursorPercent,
@@ -102,7 +101,6 @@ function PricingView({
   deepseekStale,
   deepseekLoading,
 }: {
-  period: PeriodState
   priceTableExpanded: boolean
   onTogglePriceTable: () => void
   cursorPercent: number
@@ -111,6 +109,7 @@ function PricingView({
   deepseekStale?: boolean
   deepseekLoading?: boolean
 }): JSX.Element {
+  const t = useT()
   return (
     <div className="ds-pane ds-pane--pricing">
       {/* 时间轴（周末全天空闲，仅工作日含高峰段） */}
@@ -131,14 +130,14 @@ function PricingView({
               </div>
               <span className="ai-tl-cur" style={{ left: `${cursorPercent}%` }} />
             </div>
-            <div className="ai-tl-meta">{weekend ? '周末全天空闲｜低谷' : '高峰 09:00–12:00 · 14:00–18:00｜其余空闲'}</div>
+            <div className="ai-tl-meta">{weekend ? t('period.weekend') : t('period.rule')}</div>
           </>
         )
       })()}
 
       {/* 余额查询切换（原 价格表） */}
       <button type="button" className="ai-toggle" aria-expanded={priceTableExpanded} onClick={onTogglePriceTable}>
-        <span>余额查询</span>
+        <span>{t('common.balance')}</span>
         <ChevronIcon className="ai-chev" />
       </button>
 
@@ -147,76 +146,48 @@ function PricingView({
         <div className="ai-price-inner">
           <div className="ai-inner">
             {deepseekLoading ? (
-              <div style={{ padding: '8px 4px', fontSize: 11, color: 'var(--ac-ink-2)' }}>加载中…</div>
+              <div style={{ padding: '8px 4px', fontSize: 11, color: 'var(--ac-ink-2)' }}>{t('common.loading')}</div>
             ) : deepseekError && !deepseek ? (
               <div style={{ padding: '8px 4px', fontSize: 11, color: '#a33' }}>
                 {deepseekError}
-                <div style={{ marginTop: 4, color: 'var(--ac-ink-2)' }}>请在设置页“DeepSeek Key”中配置后刷新</div>
+                <div style={{ marginTop: 4, color: 'var(--ac-ink-2)' }}>{t('common.configureDeepseekKeyHint')}</div>
               </div>
             ) : deepseek ? (
               <>
                 <div className="ai-d-row">
-                  <span>总余额</span>
+                  <span>{t('skin.totalBalance')}</span>
                   <span className="ai-d-n">
                     {deepseek.balance_infos[0]?.total_balance ?? '--'} {deepseek.balance_infos[0]?.currency ?? 'CNY'}
-                    {deepseek.is_available ? '' : ' · 不可用'}
+                    {deepseek.is_available ? '' : t('common.unavailable')}
                   </span>
                 </div>
                 <div className="ai-d-row">
-                  <span>赠送</span>
+                  <span>{t('skin.granted')}</span>
                   <span className="ai-d-n">{deepseek.balance_infos[0]?.granted_balance ?? '--'} CNY</span>
                 </div>
                 <div className="ai-d-row">
-                  <span>充值</span>
+                  <span>{t('skin.toppedUp')}</span>
                   <span className="ai-d-n">{deepseek.balance_infos[0]?.topped_up_balance ?? '--'} CNY</span>
                 </div>
                 <div className="ai-d-row">
-                  <span>可用</span>
+                  <span>{t('skin.available')}</span>
                   <span className="ai-d-n" style={{ color: deepseek.is_available ? 'var(--ac-green)' : '#e05a5a' }}>
-                    {deepseek.is_available ? '可用' : '余额不足'}
+                    {deepseek.is_available ? t('skin.available') : t('skin.insufficient')}
                   </span>
                 </div>
-                {deepseekStale && <div style={{ fontSize: 9.5, color: '#a33', marginTop: 4 }}>缓存值 · {deepseekError ?? ''}</div>}
+                {deepseekStale && <div style={{ fontSize: 9.5, color: '#a33', marginTop: 4 }}>{t('common.staleWithDetail', { detail: deepseekError ?? '' })}</div>}
               </>
             ) : (
-              <div style={{ padding: '8px 4px', fontSize: 11, color: 'var(--ac-ink-2)' }}>暂无数据</div>
+              <div style={{ padding: '8px 4px', fontSize: 11, color: 'var(--ac-ink-2)' }}>{t('common.empty')}</div>
             )}
           </div>
           <div className="ai-foot">
             <AcLeaf className="ai-foot-leaf" />
-            DeepSeek 余额 · {deepseekStale ? '缓存值' : '实时'} · CNY
+            {t('common.deepseekBalance')} · {deepseekStale ? t('common.stale') : t('common.live')} · CNY
           </div>
         </div>
       )}
     </div>
-  )
-}
-
-function ModelSection({ model }: { model: 'V4-Flash' | 'V4-Pro' }): JSX.Element {
-  const items: Array<{ label: string; key: '输入·缓存命中' | '输入·缓存未命中' | '输出' }> = [
-    { label: '输入 · 缓存命中', key: '输入·缓存命中' },
-    { label: '输入 · 缓存未命中', key: '输入·缓存未命中' },
-    { label: '输出', key: '输出' },
-  ]
-  return (
-    <>
-      <tr className="ai-wtm">
-        <td colSpan={3}>
-          <AcLeaf className="ai-model-leaf" />
-          {model}
-        </td>
-      </tr>
-      {items.map(({ label, key }) => {
-        const [idle, peak] = PRICE_TABLE[model][key]
-        return (
-          <tr key={key}>
-            <td>{label}</td>
-            <td className="ai-n ai-ci">{formatPrice(idle)}</td>
-            <td className="ai-n ai-cp">{formatPrice(peak)}</td>
-          </tr>
-        )
-      })}
-    </>
   )
 }
 
@@ -240,11 +211,12 @@ function UsageView({
   goQuotaStale?: boolean
 }): JSX.Element {
   // 优先使用真实 Go 套餐百分比；无数据时回退到本地估算（保持 0.0% 占位）
+  const t = useT()
   const hasReal = !!goQuota
   const p5h = hasReal ? goQuota!.rolling.percent : Math.min(100, (usage.estimatedCost / GO_QUOTA.fiveHour) * 100)
   const pWeek = hasReal ? goQuota!.weekly.percent : Math.min(100, (usage.estimatedCost / GO_QUOTA.weekly) * 100)
   const pMonth = hasReal ? goQuota!.monthly.percent : Math.min(100, (usage.estimatedCost / GO_QUOTA.monthly) * 100)
-  const subLabel = hasReal ? (goQuotaStale ? 'Go套餐用量 · 缓存值' : 'Go套餐用量 · 实时统计') : (usageReal ? 'Go套餐用量 · 实时统计' : 'Go套餐用量 · 示例数据')
+  const subLabel = hasReal ? (goQuotaStale ? t('go.subStale') : t('go.subRealtime')) : (usageReal ? t('go.subRealtime') : t('go.subDemo'))
   return (
     <div className="ds-pane ds-pane--usage">
       <div className="ai-usage-sub">{subLabel}</div>
@@ -253,25 +225,25 @@ function UsageView({
       {/* 3 个 tile：5小时 / 一周 / 一月（均为百分比 + 限额） */}
       <div className="ai-tiles">
         <div className="ai-tile ai-tile--5h">
-          <span className="ai-tile-k">5小时</span>
+          <span className="ai-tile-k">{t('skin.goRolling')}</span>
           <span className="ai-tile-v">{formatRate(p5h)}</span>
-          <span className="ai-tile-u">限额 $12</span>
+          <span className="ai-tile-u">{t('skin.limit', { limit: GO_QUOTA.fiveHour })}</span>
         </div>
         <div className="ai-tile ai-tile--week">
-          <span className="ai-tile-k">一周</span>
+          <span className="ai-tile-k">{t('skin.goWeekly')}</span>
           <span className="ai-tile-v">{formatRate(pWeek)}</span>
-          <span className="ai-tile-u">限额 $30</span>
+          <span className="ai-tile-u">{t('skin.limit', { limit: GO_QUOTA.weekly })}</span>
         </div>
         <div className="ai-tile ai-tile--month">
-          <span className="ai-tile-k">一月</span>
+          <span className="ai-tile-k">{t('skin.goMonthly')}</span>
           <span className="ai-tile-v">{formatRate(pMonth)}</span>
-          <span className="ai-tile-u">限额 $60</span>
+          <span className="ai-tile-u">{t('skin.limit', { limit: GO_QUOTA.monthly })}</span>
         </div>
       </div>
 
       {/* 明细切换 */}
       <button type="button" className="ai-toggle ai-toggle--usage" aria-expanded={usageDetailExpanded} onClick={onToggleUsageDetail}>
-        <span>明细</span>
+        <span>{t('skin.detail')}</span>
         <ChevronIcon className="ai-chev" />
       </button>
 
@@ -282,39 +254,39 @@ function UsageView({
             {hasReal ? (
               <>
                 <div className="ai-d-row">
-                  <span>5小时</span>
-                  <span className="ai-d-n">{formatRate(goQuota!.rolling.percent)} · 限额 $12</span>
+                  <span>{t('skin.goRolling')}</span>
+                  <span className="ai-d-n">{formatRate(goQuota!.rolling.percent)} · {t('skin.limit', { limit: GO_QUOTA.fiveHour })}</span>
                 </div>
                 <div className="ai-d-row">
-                  <span>一周</span>
-                  <span className="ai-d-n">{formatRate(goQuota!.weekly.percent)} · 限额 $30</span>
+                  <span>{t('skin.goWeekly')}</span>
+                  <span className="ai-d-n">{formatRate(goQuota!.weekly.percent)} · {t('skin.limit', { limit: GO_QUOTA.weekly })}</span>
                 </div>
                 <div className="ai-d-row">
-                  <span>一月</span>
-                  <span className="ai-d-n">{formatRate(goQuota!.monthly.percent)} · 限额 $60</span>
+                  <span>{t('skin.goMonthly')}</span>
+                  <span className="ai-d-n">{formatRate(goQuota!.monthly.percent)} · {t('skin.limit', { limit: GO_QUOTA.monthly })}</span>
                 </div>
-                {goQuotaStale && <div className="ai-d-row" style={{ color: '#a33' }}><span>提示</span><span className="ai-d-n">缓存值 · {goQuotaError ?? ''}</span></div>}
+                {goQuotaStale && <div className="ai-d-row" style={{ color: '#a33' }}><span>{t('go.hint')}</span><span className="ai-d-n">{t('common.staleWithDetail', { detail: goQuotaError ?? '' })}</span></div>}
               </>
             ) : (
               <>
                 <div className="ai-d-row">
-                  <span>5小时</span>
-                  <span className="ai-d-n">{formatRate(p5h)} · 限额 $12</span>
+                  <span>{t('skin.goRolling')}</span>
+                  <span className="ai-d-n">{formatRate(p5h)} · {t('skin.limit', { limit: GO_QUOTA.fiveHour })}</span>
                 </div>
                 <div className="ai-d-row">
-                  <span>一周</span>
-                  <span className="ai-d-n">{formatRate(pWeek)} · 限额 $30</span>
+                  <span>{t('skin.goWeekly')}</span>
+                  <span className="ai-d-n">{formatRate(pWeek)} · {t('skin.limit', { limit: GO_QUOTA.weekly })}</span>
                 </div>
                 <div className="ai-d-row">
-                  <span>一月</span>
-                  <span className="ai-d-n">{formatRate(pMonth)} · 限额 $60</span>
+                  <span>{t('skin.goMonthly')}</span>
+                  <span className="ai-d-n">{formatRate(pMonth)} · {t('skin.limit', { limit: GO_QUOTA.monthly })}</span>
                 </div>
               </>
             )}
           </div>
           <div className="ai-foot">
             <AcLeaf className="ai-foot-leaf" />
-            {hasReal ? (goQuotaStale ? '缓存值 · 按美元额度计费' : '实时统计 · 按美元额度计费') : (usageReal ? '实时统计 · 按美元额度计费' : '演示数据 · 接入后按真实用量统计')}
+            {hasReal ? (goQuotaStale ? t('go.footStale') : t('go.footRealtime')) : (usageReal ? t('go.footRealtime') : t('go.footDemo'))}
           </div>
         </div>
       )}
@@ -325,7 +297,6 @@ function UsageView({
 /* ─── 展开态主组件 ──────────────────────────────────────────────────── */
 
 export function AnimalIslandExpanded({
-  period,
   priceTableExpanded,
   onTogglePriceTable,
   cursorPercent,
@@ -343,31 +314,31 @@ export function AnimalIslandExpanded({
   deepseekStale,
   deepseekLoading,
 }: AnimalIslandExpandedProps): JSX.Element {
+  const t = useT()
   return (
     <div className={`ds-style-11${priceTableExpanded ? '' : ' is-collapsed'}`}>
       <div className="ai-head">
         <button
           type="button"
           className="ai-view-switch"
-          aria-label="切换视图"
+          aria-label={t('skin.switchView')}
           aria-pressed={viewTab === 'usage'}
           onClick={onToggleViewTab}
         >
           <SwapIcon className="ai-swap-ico" />
           <span className="ai-v-label ai-v-pricing">DeepSeek</span>
-          <span className="ai-v-label ai-v-usage">Go套餐用量</span>
+          <span className="ai-v-label ai-v-usage">{t('skin.goTitle')}</span>
         </button>
         <span className="ai-sticker">
           <i className="ai-dot" />
-          <span className="ai-lpk">高峰<i className="ai-x2">×2</i></span>
-          <span className="ai-lidle">空闲</span>
+          <span className="ai-lpk">{t('period.peak')}<i className="ai-x2">×2</i></span>
+          <span className="ai-lidle">{t('period.idle')}</span>
         </span>
       </div>
 
       <div className="ai-panes">
         {viewTab === 'pricing' && (
           <PricingView
-            period={period}
             priceTableExpanded={priceTableExpanded}
             onTogglePriceTable={onTogglePriceTable}
             cursorPercent={cursorPercent}
@@ -400,12 +371,13 @@ export function AnimalIslandCollapsed({
   viewTab,
   usage = DEMO_USAGE,
 }: AnimalIslandCollapsedProps): JSX.Element {
+  const t = useT()
   return (
     <div className="ds-collapsed-11">
       {viewTab === 'pricing' ? (
         <span className="ai-coll-pricing">
           <AcLeaf className={`ai-coll-leaf ai-coll-leaf--${period === 'peak' ? 'peak' : 'idle'}`} />
-          <span className="ai-coll-lbl">{period === 'peak' ? '峰' : '闲'}</span>
+          <span className="ai-coll-lbl">{period === 'peak' ? t('period.peakShort') : t('period.idleShort')}</span>
         </span>
       ) : (
         <span className="ai-coll-usage">
